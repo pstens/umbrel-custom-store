@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Writes the Caddyfile on every start. umbrelOS copies "hooks" on app updates
+# but not a plain Caddyfile, so the config lives here. The heredoc is quoted:
+# Caddy itself fills in {$VAR} from the container environment at load time.
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+
+cat > "${APP_DIR}/Caddyfile.tmp" <<'EOF'
+{
+	admin off
+	skip_install_trust
+	# Keeps the plain-HTTP site serving umbrelOS's app gateway instead of
+	# redirecting it to HTTPS.
+	auto_https disable_redirects
+}
+
+# Plain-HTTP entry point for umbrelOS's app gateway.
+http:// {
+	reverse_proxy {$CADDY_UPSTREAM}
+}
+
+# Local HTTPS for this device's own name (umbrel.local). Signed by Caddy's
+# local CA; trust it on your devices from /caddy-ca.crt.
+{$DEVICE_DOMAIN_NAME}, {$DEVICE_HOSTNAME} {
+	tls internal
+	handle /caddy-ca.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		file_server
+	}
+	handle {
+		reverse_proxy {$CADDY_UPSTREAM}
+	}
+}
+
+# DuckDNS hostname with a Let's Encrypt wildcard via DNS-01. Point the DuckDNS
+# record at this device's LAN IP for LAN-only access.
+*.{$DUCKDNS_SUBDOMAIN}.duckdns.org {
+	tls {
+		dns duckdns {env.DUCKDNS_TOKEN}
+		resolvers 1.1.1.1
+	}
+
+	@aio host {$AIOSTREAMS_SUBDOMAIN}.{$DUCKDNS_SUBDOMAIN}.duckdns.org
+	handle @aio {
+		reverse_proxy {$CADDY_UPSTREAM}
+	}
+}
+EOF
+
+mv "${APP_DIR}/Caddyfile.tmp" "${APP_DIR}/Caddyfile"

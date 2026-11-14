@@ -37,11 +37,12 @@ The encryption key (`SECRET_KEY`) is generated automatically from the device see
 | `CADDY_PORT` | `40444` | Host port that publishes the HTTPS site. |
 | `CADDY_UPSTREAM` | `http://sparkles-aiostreams_aiostreams_1:3000` | Address Caddy proxies requests to. The default points at the AIOStreams app on umbrelOS's shared Docker network. |
 
-Caddy serves two entry points:
+Caddy serves three entry points:
 
 | Entry point | Certificate | Reachable at |
 | --- | --- | --- |
 | Wildcard site | Let's Encrypt, publicly trusted | `https://<child>.<parent>.duckdns.org` on host port `CADDY_PORT` |
+| Local site | Caddy local CA, **not** publicly trusted | `https://umbrel.local` (the device's own name) on host port `CADDY_PORT` |
 | Plain HTTP | none | inside the container on port 80, used by umbrelOS's app gateway |
 
 AIOStreams keeps its own app proxy, so it stays reachable through umbrelOS regardless of the Caddy settings.
@@ -72,15 +73,54 @@ Drop `:40444` if you map that port to 443 on your LAN. Leave it at the default `
 
 #### Certificates
 
-The **DuckDNS wildcard** `*.<parent>.duckdns.org` is signed by Let's Encrypt and is publicly trusted, so clients accept it without any manual step. Caddy stores the certificate and the ACME account under `${APP_DATA_DIR}/data`, so they survive restarts and app updates, and renews the certificate about 30 days before it expires.
+The **DuckDNS wildcard** `*.<parent>.duckdns.org` is signed by Let's Encrypt and is publicly trusted, so clients accept it without any manual step.
+
+The **local site** (the device's own `umbrel.local` and bare hostname) is signed by **Caddy's own local authority**. Clients show a security warning until they trust the Caddy root CA, see below. The root key is persisted under `${APP_DATA_DIR}/data/data/caddy/pki/authorities/local`, so the CA stays the same across restarts and updates. Caddy stores the certificate and the ACME account under `${APP_DATA_DIR}/data`, so they survive restarts and app updates, and renews the certificate about 30 days before it expires.
 
 Caddy runs with `auto_https disable_redirects`, so the plain-HTTP site on port 80 keeps serving the umbrelOS app gateway instead of redirecting to HTTPS.
 
+#### Trusting the local certificate
+
+Download the Caddy root CA from the local site:
+
+```sh
+curl -k https://umbrel.local:40444/caddy-ca.crt -o caddy-ca.crt
+```
+
+The file is also served over plain HTTP on the app gateway port, and the path is the same on every site.
+
+Then install it as a trusted root on each device that should use the local hostname:
+
+**macOS**
+
+```sh
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain caddy-ca.crt
+```
+
+**Linux**
+
+```sh
+sudo cp caddy-ca.crt /usr/local/share/ca-certificates/caddy-ca.crt
+sudo update-ca-certificates
+```
+
+**Windows**
+
+Open `caddy-ca.crt` and choose **Install Certificate → Local Machine → Place all certificates in the following store → Trusted Root Certification Authorities**, then finish the wizard.
+
+**Android**
+
+Settings → Security → Encryption & credentials → Install a certificate → CA certificate, and pick the downloaded file.
+
+**iOS / iPadOS**
+
+Mail the certificate to yourself, open the attachment, then Settings → General → About → Certificate Trust Settings and enable full trust for the Caddy root.
+
+The certificate appears in the trust store as **Caddy Local Authority**. To remove it again, delete the entry from the trust store.
+
 #### The Caddyfile
 
-The Caddyfile is a static file. Site addresses use `{$VAR}`, which Caddy fills in from the container environment when it loads the config, so the app settings flow in without a generator. The token is read with `{env.DUCKDNS_TOKEN}` at runtime and is never written to disk.
-
-umbrelOS does not copy a plain `Caddyfile` into the app folder on updates, so reinstall the app to pick up a changed Caddyfile.
+The app's `pre-start` hook writes `${APP_DATA_DIR}/Caddyfile` on every start. umbrelOS copies `hooks` on app updates but not a plain Caddyfile, so the config lives in the hook. The heredoc is not expanded by the shell: site addresses use `{$VAR}`, which Caddy fills in from the container environment when it loads the config. The token is read with `{env.DUCKDNS_TOKEN}` at runtime and is never written to disk. Edits to the generated file are overwritten on the next start.
 
 ## Development
 

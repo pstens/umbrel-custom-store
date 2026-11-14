@@ -15,6 +15,9 @@ services:
       AIOSTREAMS_SUBDOMAIN: ${AIOSTREAMS_SUBDOMAIN:-}
       DUCKDNS_TOKEN: ${DUCKDNS_TOKEN:-}
       CADDY_UPSTREAM: ${CADDY_UPSTREAM:-http://sparkles-aiostreams_aiostreams_1:3000}
+      # Provided by umbrelOS; names the local HTTPS site (umbrel.local).
+      DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME}
+      DEVICE_HOSTNAME: ${DEVICE_HOSTNAME}
     ports:
       # umbrelOS 2.0 already binds the host ports 80 and 443 for its own
       # dashboard, so the HTTPS entry point uses a high host port. Point your
