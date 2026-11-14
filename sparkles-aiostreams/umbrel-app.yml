@@ -7,7 +7,7 @@ environment:
     services:
       - aiostreams
     default: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
-    note: Public URL of this instance, including protocol and port.
+    note: Public URL of this instance, including protocol and port. When the Caddy app serves it, set this to https://<child>.<parent>.duckdns.org.
   - name: AIOSTREAMS_AUTH
     services:
       - aiostreams
@@ -58,8 +58,12 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 submitter: Sparkles
+submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
   Updates AIOStreams to v2.38.0 and makes the instance configurable from the
   app settings: base URL, operator accounts and permissions, and request header
   overrides. The encryption key is now generated automatically, so the app works
   without any manual setup.
+
+  The base URL setting now mentions the Caddy app, so the generated install
+  links can point at the HTTPS domain.

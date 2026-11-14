@@ -3,28 +3,52 @@ id: sparkles-caddy
 storage:
   dataRoot: data
 environment:
+  - name: DUCKDNS_SUBDOMAIN
+    services:
+      - caddy
+    default: "homednx"
+    note: DuckDNS parent subdomain. The wildcard certificate is issued for *.SUBDOMAIN.duckdns.org and AIOStreams is served at aio.SUBDOMAIN.duckdns.org.
+  - name: AIOSTREAMS_SUBDOMAIN
+    services:
+      - caddy
+    default: "aio"
+    note: Child subdomain that serves AIOStreams. The full hostname is this value plus the DuckDNS parent subdomain, for example aio.homednx.duckdns.org.
+  - name: DUCKDNS_TOKEN
+    services:
+      - caddy
+    default: ""
+    note: DuckDNS API token from https://www.duckdns.org. Caddy uses it to answer the DNS-01 challenge that issues the certificate.
+  - name: CADDY_PORT
+    services:
+      - caddy
+    default: "40444"
+    note: Host port that publishes the HTTPS site. umbrelOS already uses 80 and 443, so this defaults to 40444. Match it in your LAN exposure.
   - name: CADDY_UPSTREAM
     services:
       - caddy
     default: "http://sparkles-aiostreams_aiostreams_1:3000"
     note: Address Caddy proxies requests to. Defaults to the installed AIOStreams app.
-  - name: CADDY_ADDRESS
-    services:
-      - caddy
-    default: "http://"
-    note: Site address Caddy serves, for example "http://" for plain HTTP. Keep the port at 80, that is the port umbrelOS connects to.
 category: networking
 name: Caddy
-version: "2.11.9"
+version: "2.13.0"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/caddy.png
 tagline: Reverse proxy in front of AIOStreams
 description: >-
-  Caddy reverse-proxies requests to AIOStreams, so you can serve AIOStreams
-  under your own hostname and let Caddy handle the connection.
+  Caddy reverse-proxies requests to AIOStreams and serves them over HTTPS with
+  a publicly trusted Let's Encrypt certificate, so you can reach AIOStreams at
+  your own DuckDNS hostname.
 
-  Set the upstream address and the listen address in the app's environment
-  settings. The default upstream points at the AIOStreams app installed on this
-  device, which is required for this app.
+  Set your DuckDNS parent subdomain, the child subdomain for AIOStreams and
+  the DuckDNS API token in the app's environment settings. The certificate is
+  issued with the DNS-01 challenge, so no inbound router port and no public
+  DNS record are needed.
+
+  Point the DuckDNS A record at this device's LAN address for LAN-only
+  access, and open the published port on your LAN. The HTTPS site listens on
+  host port 40444, because umbrelOS already occupies the host ports 80 and
+  443.
+
+  AIOStreams stays reachable through its own app proxy at the same time.
 developer: Caddy
 website: https://caddyserver.com
 dependencies:
@@ -37,4 +61,16 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 submitter: Sparkles
-releaseNotes: ""
+submission: https://github.com/pstens/umbrel-custom-store
+releaseNotes: >-
+  Caddy now terminates TLS with a publicly trusted Let's Encrypt certificate
+  for a DuckDNS wildcard, using the DNS-01 challenge and the DuckDNS API
+  token from the app settings. The hostnames are built from the DuckDNS
+  parent subdomain and the AIOStreams child subdomain, so AIOStreams is
+  served at aio.<parent>.duckdns.org.
+
+  The CADDY_ADDRESS setting is gone, because the wildcard hostnames now
+  drive the site address. The published HTTPS port moved to 40444, because
+  umbrelOS occupies the host ports 80 and 443 and the official Nginx Proxy
+  Manager app already publishes 40443. The Caddyfile is now generated on
+  every start, so it stays in sync with the app settings after updates.
