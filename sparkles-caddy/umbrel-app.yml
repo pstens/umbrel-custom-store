@@ -23,6 +23,11 @@ environment:
       - caddy
     default: "40444"
     note: Host port that publishes the HTTPS site. umbrelOS already uses 80 and 443, so this defaults to 40444. Match it in your LAN exposure.
+  - name: CADDY_LOCAL_HOST
+    services:
+      - caddy
+    default: ""
+    note: Local hostname Caddy serves over HTTPS, by default the device's own name like umbrel.local. Its certificate comes from Caddy's own CA, so you must trust that CA on your devices. Download it from https://<local-host>/caddy-ca.crt.
   - name: CADDY_UPSTREAM
     services:
       - caddy
@@ -30,7 +35,7 @@ environment:
     note: Address Caddy proxies requests to. Defaults to the installed AIOStreams app.
 category: networking
 name: Caddy
-version: "2.13.0"
+version: "2.14.0"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/caddy.png
 tagline: Reverse proxy in front of AIOStreams
 description: >-
@@ -47,6 +52,11 @@ description: >-
   access, and open the published port on your LAN. The HTTPS site listens on
   host port 40444, because umbrelOS already occupies the host ports 80 and
   443.
+
+  Caddy also serves the device's own local address over HTTPS. That
+  certificate is signed by Caddy's own local authority and is not publicly
+  trusted, so install the Caddy root CA on your devices from
+  https://<local-host>/caddy-ca.crt first.
 
   AIOStreams stays reachable through its own app proxy at the same time.
 developer: Caddy
@@ -68,6 +78,10 @@ releaseNotes: >-
   token from the app settings. The hostnames are built from the DuckDNS
   parent subdomain and the AIOStreams child subdomain, so AIOStreams is
   served at aio.<parent>.duckdns.org.
+
+  Caddy also serves the device's own local address over HTTPS, signed by
+  its own local authority. The root certificate is served at
+  /caddy-ca.crt so you can install it on your devices.
 
   The CADDY_ADDRESS setting is gone, because the wildcard hostnames now
   drive the site address. The published HTTPS port moved to 40444, because

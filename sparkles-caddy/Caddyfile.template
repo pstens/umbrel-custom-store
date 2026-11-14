@@ -1,14 +1,15 @@
-# Public HTTPS entry point. The certificate is issued by Let's Encrypt with
-# the DNS-01 challenge, because umbrelOS already occupies the host ports 80
-# and 443 and no HTTP or TLS-ALPN challenge could reach this container.
-*.@@PARENT@@.duckdns.org {
-	tls {
-		dns duckdns {env.DUCKDNS_TOKEN}
-		resolvers 1.1.1.1
+# Local HTTPS entry point for this device's own address. A ".local" name is
+# not publicly-trustable, so Caddy signs it with its own local authority and
+# clients have to trust the Caddy root CA, which is served at
+# "/caddy-ca.crt" below.
+@@LOCAL_HOSTS@@ {
+	tls internal
+	root * /data/caddy/pki/authorities/local
+	handle /caddy-ca.crt {
+		rewrite * /root.crt
+		file_server
 	}
-
-	@@MATCHER@@ host @@CHILD@@.@@PARENT@@.duckdns.org
-	handle @@MATCHER@@ {
+	handle {
 		reverse_proxy @@UPSTREAM@@
 	}
 }
