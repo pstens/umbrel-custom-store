@@ -1,17 +1,48 @@
-## Umbrel Community App Store Template
+## Sparkles Umbrel Community App Store
 
-This repository is a template to create an Umbrel Community App Store. These additional app stores allow developers to distribute applications without submitting to the [Official Umbrel App Store](https://github.com/getumbrel/umbrel-apps).
+This store contains custom umbrelOS packages:
 
-## How to use:
+- **AIOStreams** (`sparkles-aiostreams`) — combines Stremio addons, debrid services, and Usenet sources into one configurable stream.
+- **Caddy** (`sparkles-caddy`) — reverse proxy that sits in front of AIOStreams.
 
-1. Start by clicking the "Use this template" button located above.
-2. Assign an ID and name to your app store within the `umbrel-app-store.yml` file. This file specifies two important attributes:
-    - `id` - Acts as a unique prefix for every app within your Community App Store. You must start your application's ID with your app store's ID. For instance, in this template, the app store ID is `sparkles`, and there's an app named `hello world`. Consequently, the app's ID should be: `sparkles-hello-world`.
-    - `name` - This is the name of the Community App Store displayed in the umbrelOS UI.
-3. Change the name of the `sparkles-hello-world` folder to match your app's ID. The app ID is for you to decide. For example, if your app store ID is `whistles`, and your app is named My Video Downloader, you could set its app ID to `whistles-my-video-downloader`, and rename the folder accordingly.
-4. Next, enter your app's listing details in the `whistles-my-video-downloader/umbrel-app.yml`. These are displayed in the umbrelOS UI.
-5. Include the necessary Docker services in `whistles-my-video-downloader/docker-compose.yml`.
-6. That's it! Your Community App Store, featuring your unique app, is now set up and ready to go. To use your Community App Store, you can add its GitHub url the umbrelOS user interface as shown in the following demo:
+### Add the store
 
+Add this repository's Git URL in umbrelOS under **App Store → Community App Stores**.
 
-https://user-images.githubusercontent.com/10330103/197889452-e5cd7e96-3233-4a09-b475-94b754adc7a3.mp4
+Install **AIOStreams** first. Caddy declares it as a dependency, so umbrelOS will not offer Caddy until AIOStreams is installed.
+
+## Configuration
+
+umbrelOS 2.x exposes per-app settings under the app's **Settings → Environment variables**. Saving a value restarts the app with the new value applied.
+
+### AIOStreams
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BASE_URL` | `http://<device>.local:4000` | Public URL of the instance, including protocol and port. Used to build installation links. |
+| `AIOSTREAMS_AUTH` | empty | Operator accounts as comma-separated `username:password` pairs. |
+| `AIOSTREAMS_AUTH_PERMISSIONS` | empty | Operator permissions as comma-separated `username=permission` entries. |
+| `AIOSTREAMS_AUTH_REQUIRED` | `false` | Require a login to open the configure page. |
+| `REQUEST_HEADER_OVERRIDES` | empty | Request header overrides as comma-separated `key:value` pairs. |
+
+The encryption key (`SECRET_KEY`) is generated automatically from the device seed and is stable across restarts and updates. It must not be changed after the first start, otherwise saved source credentials can no longer be decrypted. Everything else is configured from the AIOStreams dashboard.
+
+### Caddy
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `CADDY_UPSTREAM` | `http://sparkles-aiostreams_aiostreams_1:3000` | Address Caddy proxies requests to. The default points at the AIOStreams app on umbrelOS's shared Docker network. |
+| `CADDY_ADDRESS` | `http://` | Site address Caddy serves. Keep the port at `80`: that is the port umbrelOS connects to, so a different port makes the app unreachable. |
+
+`Caddyfile` in this package holds the Caddy configuration. Caddy expands `{$CADDY_ADDRESS}` and `{$CADDY_UPSTREAM}` from its own environment when it loads the file, so the values set in umbrelOS apply without regenerating the file.
+
+Caddy's configuration and certificate storage persist under `${APP_DATA_DIR}/data`. The `Caddyfile` itself lives at `${APP_DATA_DIR}/Caddyfile` and is installed with the app; it is not replaced by app updates, so changes to it only take effect after a reinstall.
+
+## Development
+
+Each package lives in a directory whose name matches its `id`. Validate the manifests and the Compose configuration without starting containers:
+
+```sh
+docker compose -f sparkles-aiostreams/docker-compose.yml config
+docker compose -f sparkles-caddy/docker-compose.yml config
+```

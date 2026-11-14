@@ -1,18 +1,23 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: sparkles-aiostreams_aiostreams_1
+      APP_PORT: 3000
+
   aiostreams:
-    image: ghcr.io/viren070/aiostreams:latest
-    container_name: aiostreams
-    restart: unless-stopped
+    image: ghcr.io/viren070/aiostreams:v2.38.0@sha256:ab78358c1a6897ae53489ee24199661c42c6791fd3a0312076bee1a76ab82a2e
+    restart: on-failure
+    stop_grace_period: 1m
     environment:
       PORT: "3000"
-      AIOSTREAMS_DOMAIN: ${AIOSTREAMS_DOMAIN}
-      BASE_URL: ${BASE_URL}
-      SECRET_KEY: ${SECRET_KEY}
-      AIOSTREAMS_AUTH: ${AIOSTREAMS_AUTH}
-      AIOSTREAMS_AUTH_PERMISSIONS: ${AIOSTREAMS_AUTH_PERMISSIONS}
-      DATABASE_URI: sqlite:///app/addon/data/db.sqlite
-      REQUEST_HEADER_OVERRIDES: ${REQUEST_HEADER_OVERRIDES}
+      BASE_URL: ${BASE_URL:-http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}}
+      SECRET_KEY: ${APP_SPARKLES_AIOSTREAMS_SECRET_KEY}
+      DATABASE_URI: sqlite://./data/db.sqlite
+      AIOSTREAMS_AUTH: ${AIOSTREAMS_AUTH:-}
+      AIOSTREAMS_AUTH_PERMISSIONS: ${AIOSTREAMS_AUTH_PERMISSIONS:-}
+      AIOSTREAMS_AUTH_REQUIRED: ${AIOSTREAMS_AUTH_REQUIRED:-false}
+      REQUEST_HEADER_OVERRIDES: ${REQUEST_HEADER_OVERRIDES:-}
     volumes:
-      - ./aiostreams-data:/app/addon/data
+      - ${APP_DATA_DIR}/data:/app/data

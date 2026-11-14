@@ -1,0 +1,40 @@
+manifestVersion: "2.0"
+id: sparkles-caddy
+storage:
+  dataRoot: data
+environment:
+  - name: CADDY_UPSTREAM
+    services:
+      - caddy
+    default: "http://sparkles-aiostreams_aiostreams_1:3000"
+    note: Address Caddy proxies requests to. Defaults to the installed AIOStreams app.
+  - name: CADDY_ADDRESS
+    services:
+      - caddy
+    default: "http://"
+    note: Site address Caddy serves, for example "http://" for plain HTTP. Keep the port at 80, that is the port umbrelOS connects to.
+category: networking
+name: Caddy
+version: "2.11.9"
+icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/caddy.png
+tagline: Reverse proxy in front of AIOStreams
+description: >-
+  Caddy reverse-proxies requests to AIOStreams, so you can serve AIOStreams
+  under your own hostname and let Caddy handle the connection.
+
+  Set the upstream address and the listen address in the app's environment
+  settings. The default upstream points at the AIOStreams app installed on this
+  device, which is required for this app.
+developer: Caddy
+website: https://caddyserver.com
+dependencies:
+  - sparkles-aiostreams
+repo: https://github.com/caddyserver/caddy
+support: https://github.com/caddyserver/caddy/issues
+port: 4001
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Sparkles
+releaseNotes: ""

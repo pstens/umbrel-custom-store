@@ -1,26 +1,65 @@
-manifestVersion: 1
+manifestVersion: "2.0"
 id: sparkles-aiostreams
+storage:
+  dataRoot: data
+environment:
+  - name: BASE_URL
+    services:
+      - aiostreams
+    default: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+    note: Public URL of this instance, including protocol and port.
+  - name: AIOSTREAMS_AUTH
+    services:
+      - aiostreams
+    default: ""
+    note: Operator accounts as comma-separated username:password pairs.
+  - name: AIOSTREAMS_AUTH_PERMISSIONS
+    services:
+      - aiostreams
+    default: ""
+    note: Operator permissions as comma-separated username=permission entries.
+  - name: AIOSTREAMS_AUTH_REQUIRED
+    services:
+      - aiostreams
+    default: "false"
+    options:
+      - "true"
+      - "false"
+    note: Require a login to open the configure page.
+  - name: REQUEST_HEADER_OVERRIDES
+    services:
+      - aiostreams
+    default: ""
+    note: Request header overrides as comma-separated key:value pairs.
+category: media
 name: AIOStreams
-icon: https://aiostreams.viren070.me/logo.png
-category: Streams
-version: "1.0.0"
-port: 4000
+version: "2.38.0"
+icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/aiostreams.png
+tagline: Combine, filter, and stream all your sources
 description: >-
- AIOStreams in UmbrelOS!
+  AIOStreams combines your Stremio addons, debrid services, and Usenet sources
+  into one configurable stream.
 
-developer: Umbrel
-website: https://umbrel.com
-submitter: Umbrel
-submission: https://github.com/getumbrel/umbrel-hello-world-app
-repo: https://github.com/getumbrel/umbrel-hello-world-app
-support: https://github.com/getumbrel/umbrel-hello-world-app/issues
-gallery:
-  - https://i.imgur.com/yyVG0Jb.jpeg
-  - https://i.imgur.com/yyVG0Jb.jpeg
-  - https://i.imgur.com/yyVG0Jb.jpeg
-releaseNotes: >-
-  Add what's new in the latest version of your app here.
+  Add sources, pick your filters, sorting, and formatting rules, then install
+  the result as a single addon in Stremio or play it in the AIOStreams app and
+  your Jellyfin apps.
+
+  Your configuration is stored on this device. The encryption key is generated
+  automatically on first start and must not be changed afterwards, or saved
+  source credentials can no longer be decrypted.
+developer: Viren070
+website: https://aiostreams.org
 dependencies: []
+repo: https://github.com/Viren070/AIOStreams
+support: https://github.com/Viren070/AIOStreams/issues
+port: 4000
+gallery: []
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+submitter: Sparkles
+releaseNotes: >-
+  Updates AIOStreams to v2.38.0 and makes the instance configurable from the
+  app settings: base URL, operator accounts and permissions, and request header
+  overrides. The encryption key is now generated automatically, so the app works
+  without any manual setup.
