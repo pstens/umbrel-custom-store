@@ -30,7 +30,7 @@ environment:
     note: Address Caddy proxies requests to. Defaults to the installed AIOStreams app.
 category: networking
 name: Caddy
-version: "2.14.0"
+version: "2.15.0"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/caddy.png
 tagline: Reverse proxy in front of AIOStreams
 description: >-
@@ -63,14 +63,11 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  Caddy now terminates TLS with a publicly trusted Let's Encrypt certificate
-  for a DuckDNS wildcard, using the DNS-01 challenge and the DuckDNS API
-  token from the app settings. The hostnames are built from the DuckDNS
-  parent subdomain and the AIOStreams child subdomain, so AIOStreams is
-  served at aio.<parent>.duckdns.org.
+  AIOStreams is now served over LAN HTTPS at aio.<parent>.duckdns.org with
+  the publicly trusted Let's Encrypt wildcard certificate. Point the DuckDNS
+  record at this device's LAN IP and set the AIOStreams BASE_URL to
+  https://aio.<parent>.duckdns.org:40444.
 
-  The CADDY_ADDRESS setting is gone, because the wildcard hostnames now
-  drive the site address. The published HTTPS port moved to 40444, because
-  umbrelOS occupies the host ports 80 and 443 and the official Nginx Proxy
-  Manager app already publishes 40443. The Caddyfile is
-  a static file that reads the app settings from the environment.
+  The self-signed local site, the /caddy-ca.crt download and the
+  CADDY_LOCAL_HOST setting are gone. The Caddyfile is now a static file that
+  reads the app settings from the environment.
