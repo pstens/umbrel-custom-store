@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  aiostreams:
+    image: ghcr.io/viren070/aiostreams:latest
+    container_name: aiostreams
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      AIOSTREAMS_DOMAIN: ${AIOSTREAMS_DOMAIN}
+      BASE_URL: ${BASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      AIOSTREAMS_AUTH: ${AIOSTREAMS_AUTH}
+      AIOSTREAMS_AUTH_PERMISSIONS: ${AIOSTREAMS_AUTH_PERMISSIONS}
+      DATABASE_URI: sqlite:///app/addon/data/db.sqlite
+      REQUEST_HEADER_OVERRIDES: ${REQUEST_HEADER_OVERRIDES}
+    volumes:
+      - ./aiostreams-data:/app/addon/data

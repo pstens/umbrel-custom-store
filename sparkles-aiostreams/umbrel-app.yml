@@ -1,16 +1,12 @@
 manifestVersion: 1
-id: sparkles-hello-world
-name: Hello World
-tagline: Replace this tagline with your app's tagline
-icon: https://svgur.com/i/mvA.svg
-category: Development
+id: sparkles-aiostreams
+name: AIOStreams
+icon: https://aiostreams.viren070.me/logo.png
+category: Streams
 version: "1.0.0"
 port: 4000
 description: >-
-  Add your app's description here.
-
-
-  You can also add newlines!
+ AIOStreams in UmbrelOS!
 
 developer: Umbrel
 website: https://umbrel.com
