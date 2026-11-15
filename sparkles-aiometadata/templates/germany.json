@@ -126,8 +126,10 @@
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
               "vote_count.gte": 10,
+              "with_type": "2|4",
               "air_date.gte": "__tmdb_date__:last_14_days:from",
-              "air_date.lte": "__tmdb_date__:today:to"
+              "air_date.lte": "__tmdb_date__:today:to",
+              "first_air_date.gte": "__tmdb_date__:last_5_years:from"
             },
             "formState": {
               "catalogName": "Im Trend",
@@ -159,7 +161,9 @@
               "include_adult": false,
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
-              "vote_count.gte": 300
+              "vote_count.gte": 300,
+              "with_type": "2|4",
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "Beliebt",
@@ -221,7 +225,7 @@
               "include_adult": false,
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
-              "with_watch_providers": "8",
+              "with_watch_providers": "8|1796",
               "vote_count.gte": 10
             },
             "formState": {
@@ -235,6 +239,10 @@
               "watchProviders": [
                 {
                   "id": 8,
+                  "label": "Netflix"
+                },
+                {
+                  "id": 1796,
                   "label": "Netflix"
                 }
               ],
@@ -501,7 +509,7 @@
               "include_adult": false,
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
-              "with_watch_providers": "298",
+              "with_watch_providers": "2750",
               "vote_count.gte": 10
             },
             "formState": {
@@ -514,7 +522,7 @@
               "watchRegion": "DE",
               "watchProviders": [
                 {
-                  "id": 298,
+                  "id": 2750,
                   "label": "RTL+"
                 }
               ],
@@ -541,7 +549,7 @@
               "include_adult": false,
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
-              "with_watch_providers": "304",
+              "with_watch_providers": "304|421",
               "vote_count.gte": 10
             },
             "formState": {
@@ -555,6 +563,10 @@
               "watchProviders": [
                 {
                   "id": 304,
+                  "label": "Joyn"
+                },
+                {
+                  "id": 421,
                   "label": "Joyn"
                 }
               ],
@@ -621,8 +633,9 @@
               "include_adult": false,
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
-              "with_watch_providers": "8",
-              "vote_count.gte": 10
+              "with_watch_providers": "8|1796",
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "Netflix",
@@ -635,6 +648,10 @@
               "watchProviders": [
                 {
                   "id": 8,
+                  "label": "Netflix"
+                },
+                {
+                  "id": 1796,
                   "label": "Netflix"
                 }
               ],
@@ -662,7 +679,8 @@
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
               "with_watch_providers": "9",
-              "vote_count.gte": 10
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "Prime Video",
@@ -702,7 +720,8 @@
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
               "with_watch_providers": "337",
-              "vote_count.gte": 10
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "Disney+",
@@ -742,7 +761,8 @@
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
               "with_watch_providers": "350",
-              "vote_count.gte": 10
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "Apple TV",
@@ -782,7 +802,8 @@
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
               "with_watch_providers": "30",
-              "vote_count.gte": 10
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "WOW",
@@ -822,7 +843,8 @@
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
               "with_watch_providers": "1899",
-              "vote_count.gte": 10
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "HBO Max",
@@ -862,7 +884,8 @@
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
               "with_watch_providers": "531",
-              "vote_count.gte": 10
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "Paramount+",
@@ -901,8 +924,9 @@
               "include_adult": false,
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
-              "with_watch_providers": "298",
-              "vote_count.gte": 10
+              "with_watch_providers": "2750",
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "RTL+",
@@ -914,7 +938,7 @@
               "watchRegion": "DE",
               "watchProviders": [
                 {
-                  "id": 298,
+                  "id": 2750,
                   "label": "RTL+"
                 }
               ],
@@ -941,8 +965,9 @@
               "include_adult": false,
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
-              "with_watch_providers": "304",
-              "vote_count.gte": 10
+              "with_watch_providers": "304|421",
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "Joyn",
@@ -955,6 +980,10 @@
               "watchProviders": [
                 {
                   "id": 304,
+                  "label": "Joyn"
+                },
+                {
+                  "id": 421,
                   "label": "Joyn"
                 }
               ],
@@ -982,7 +1011,8 @@
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
               "with_watch_providers": "283",
-              "vote_count.gte": 10
+              "vote_count.gte": 10,
+              "first_air_date.gte": "__tmdb_date__:last_10_years:from"
             },
             "formState": {
               "catalogName": "Crunchyroll",
@@ -1004,9 +1034,6 @@
         }
       }
     ],
-    "settings": {
-      "language": "de-DE"
-    },
     "requires": [
       "tmdb"
     ]

@@ -51,10 +51,10 @@ Fixed by the app, not settable: `PORT`, `NODE_ENV`, the SQLite database and cach
 
 | Catalog | What it lists |
 | --- | --- |
-| Im Trend | Movies: released in Germany in the last 60 days. Series: episodes aired in the last 14 days on German streaming. Sorted by TMDB popularity. |
-| Beliebt | Most popular titles available on German subscription, free or ad-supported streaming. |
+| Im Trend | Movies: released in Germany in the last 60 days. Series: scripted shows and miniseries that premiered in the last 5 years and aired an episode in the last 14 days, on German streaming. Sorted by TMDB popularity. |
+| Beliebt | Most popular titles available on German subscription, free or ad-supported streaming. Series: scripted shows and miniseries that premiered in the last 10 years. |
 | Demnächst | Movies: German theatrical releases in the next 90 days. Series: premieres in the next 90 days, worldwide, because TMDB has no German air dates for series. |
-| Netflix, Prime Video, Disney+, Apple TV, WOW, HBO Max, Paramount+, RTL+, Joyn, Crunchyroll | Most popular titles on that service in Germany. Rentals and purchases are excluded. |
+| Netflix, Prime Video, Disney+, Apple TV, WOW, HBO Max, Paramount+, RTL+, Joyn, Crunchyroll | Most popular titles on that service in Germany. Rentals and purchases are excluded. Series: premiered in the last 10 years. |
 
 TMDB popularity is global, so "Im Trend" and "Beliebt" mean popular titles that are available or released in Germany. There is no TMDB ranking per country.
 
@@ -64,7 +64,7 @@ To apply it, open AIOMetadata → **Setup** → **Share a setup**, load
 https://raw.githubusercontent.com/pstens/umbrel-custom-store/master/sparkles-aiometadata/templates/germany.json
 ```
 
-then preview and apply. The template also sets the metadata language to `de-DE`. It disables the built-in catalogs, which removes the long genre lists in UHF. Add the manifest URL to AIOStreams afterwards, or refresh it there.
+then preview and apply. The template disables the built-in catalogs, which removes the long genre lists in UHF. Add the manifest URL to AIOStreams afterwards, or refresh it there. The Setup page does not carry the metadata language, so set **German** as the language on the configure page yourself.
 
 The streaming catalogs use TMDB's German watch-provider IDs. If a row stays empty, pick that service in the Setup page's streaming picker with region **Germany** instead. The picker looks the IDs up live.
 
