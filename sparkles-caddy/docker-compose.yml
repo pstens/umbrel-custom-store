@@ -15,6 +15,8 @@ services:
       AIOSTREAMS_SUBDOMAIN: ${AIOSTREAMS_SUBDOMAIN:-}
       DUCKDNS_TOKEN: ${DUCKDNS_TOKEN:-}
       CADDY_UPSTREAM: ${CADDY_UPSTREAM:-http://sparkles-aiostreams_aiostreams_1:3000}
+      AIOMETADATA_SUBDOMAIN: ${AIOMETADATA_SUBDOMAIN:-meta}
+      AIOMETADATA_UPSTREAM: ${AIOMETADATA_UPSTREAM:-http://sparkles-aiometadata_aiometadata_1:3232}
       # Provided by umbrelOS; names the local HTTPS site (umbrel.local).
       DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME}
       DEVICE_HOSTNAME: ${DEVICE_HOSTNAME}

@@ -28,9 +28,19 @@ environment:
       - caddy
     default: "http://sparkles-aiostreams_aiostreams_1:3000"
     note: Address Caddy proxies requests to. Defaults to the installed AIOStreams app.
+  - name: AIOMETADATA_SUBDOMAIN
+    services:
+      - caddy
+    default: "meta"
+    note: Child subdomain that serves AIOMetadata, for example meta.homednx.duckdns.org. Answers 502 until the AIOMetadata app is installed.
+  - name: AIOMETADATA_UPSTREAM
+    services:
+      - caddy
+    default: "http://sparkles-aiometadata_aiometadata_1:3232"
+    note: Address Caddy proxies AIOMetadata requests to. Defaults to the installed AIOMetadata app.
 category: networking
 name: Caddy
-version: "2.16.0"
+version: "2.17.0"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/caddy.png
 tagline: Reverse proxy in front of AIOStreams
 description: >-
@@ -67,10 +77,6 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  The local HTTPS site is back: Caddy serves umbrel.local on port 40444 with
-  a certificate from its own local authority, next to the DuckDNS hostname
-  with its Let's Encrypt wildcard. Download the root CA from
-  https://umbrel.local:40444/caddy-ca.crt and trust it on your devices.
-
-  The Caddyfile is written by the pre-start hook again, so it now follows
-  app updates.
+  Caddy now also serves the AIOMetadata app at meta.<parent>.duckdns.org on
+  the same port and wildcard certificate. Change the child subdomain with
+  AIOMETADATA_SUBDOMAIN.

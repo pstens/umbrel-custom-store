@@ -47,6 +47,11 @@ http:// {
 	handle @aio {
 		reverse_proxy {$CADDY_UPSTREAM}
 	}
+
+	@meta host {$AIOMETADATA_SUBDOMAIN}.{$DUCKDNS_SUBDOMAIN}.duckdns.org
+	handle @meta {
+		reverse_proxy {$AIOMETADATA_UPSTREAM}
+	}
 }
 EOF
 
