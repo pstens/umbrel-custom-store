@@ -5,15 +5,18 @@
   "template": {
     "id": "sparkles.germany",
     "name": "Deutschland",
-    "tagline": "Trend, Beliebt und Demnächst in Deutschland, plus deutsche Streamingdienste",
+    "tagline": "Im Trend, Neu im Kino, Neu auf Streaming, Beliebt und Demnächst, plus deutsche Streamingdienste",
     "lineup": {
-      "catalogIds": []
+      "catalogIds": [
+        "tmdb.trending:movie",
+        "tmdb.trending:series"
+      ]
     },
     "catalogs": [
       {
-        "id": "tmdb.discover.movie.de_trending.sparkles",
+        "id": "tmdb.discover.movie.de_cinema.sparkles",
         "type": "movie",
-        "name": "Im Trend",
+        "name": "Neu im Kino",
         "enabled": true,
         "showInHome": true,
         "source": "tmdb",
@@ -27,18 +30,50 @@
               "sort_by": "popularity.desc",
               "include_adult": false,
               "region": "DE",
-              "with_release_type": "3|4|5|6",
-              "vote_count.gte": 10,
-              "release_date.gte": "__tmdb_date__:last_60_days:from",
+              "with_release_type": "2|3",
+              "release_date.gte": "__tmdb_date__:last_month:from",
               "release_date.lte": "__tmdb_date__:today:to"
             },
             "formState": {
-              "catalogName": "Im Trend",
+              "catalogName": "Neu im Kino",
               "discoverSource": "tmdb",
               "catalogType": "movie",
               "tmdbMediaType": "movie",
               "sortBy": "popularity.desc",
               "includeAdult": false
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_new_streaming.sparkles",
+        "type": "movie",
+        "name": "Neu auf Streaming",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "primary_release_date.gte": "__tmdb_date__:last_year:from",
+              "primary_release_date.lte": "__tmdb_date__:today:to"
+            },
+            "formState": {
+              "catalogName": "Neu auf Streaming",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE"
             }
           }
         }
@@ -93,8 +128,7 @@
               "include_adult": false,
               "region": "DE",
               "with_release_type": "2|3",
-              "release_date.gte": "__tmdb_date__:today:from",
-              "release_date.lte": "__tmdb_date__:next_90_days:to"
+              "release_date.gte": "__tmdb_date__:today:from"
             },
             "formState": {
               "catalogName": "Demnächst",
@@ -108,9 +142,9 @@
         }
       },
       {
-        "id": "tmdb.discover.series.de_trending.sparkles",
+        "id": "tmdb.discover.series.de_new_streaming.sparkles",
         "type": "series",
-        "name": "Im Trend",
+        "name": "Neu auf Streaming",
         "enabled": true,
         "showInHome": true,
         "source": "tmdb",
@@ -125,14 +159,12 @@
               "include_adult": false,
               "with_watch_monetization_types": "flatrate|free|ads",
               "watch_region": "DE",
-              "vote_count.gte": 10,
               "with_type": "2|4",
-              "air_date.gte": "__tmdb_date__:last_14_days:from",
-              "air_date.lte": "__tmdb_date__:today:to",
-              "first_air_date.gte": "__tmdb_date__:last_5_years:from"
+              "first_air_date.gte": "__tmdb_date__:last_month:from",
+              "first_air_date.lte": "__tmdb_date__:today:to"
             },
             "formState": {
-              "catalogName": "Im Trend",
+              "catalogName": "Neu auf Streaming",
               "discoverSource": "tmdb",
               "catalogType": "series",
               "tmdbMediaType": "tv",
@@ -193,8 +225,7 @@
             "params": {
               "sort_by": "popularity.desc",
               "include_adult": false,
-              "first_air_date.gte": "__tmdb_date__:today:from",
-              "first_air_date.lte": "__tmdb_date__:next_90_days:to"
+              "first_air_date.gte": "__tmdb_date__:today:from"
             },
             "formState": {
               "catalogName": "Demnächst",

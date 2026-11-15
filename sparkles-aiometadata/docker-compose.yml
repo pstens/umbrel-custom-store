@@ -15,12 +15,15 @@ services:
     init: true
     entrypoint: ["node", "-e"]
     command:
+      # Every $ is doubled so Compose leaves it alone.
       - |
-        // Proxies AIOMetadata and drops the genre filter from every catalog except
-        // GENRE_CATALOG_IDS, so Jellyfin apps like UHF list each genre once.
+        // Proxies AIOMetadata. Catalogs outside GENRE_CATALOG_IDS get a single
+        // "Alle" genre instead of their full list, so Jellyfin apps like UHF show
+        // one tile per catalog plus one per genre of the kept catalogs.
         const up = new URL(process.env.UPSTREAM);
         const client = require(up.protocol === 'https:' ? 'https' : 'http');
         const keep = new Set((process.env.GENRE_CATALOG_IDS || '').split(',').map((s) => s.trim()).filter(Boolean));
+        const ALL = 'Alle';
 
         function strip(body) {
           try {
@@ -28,7 +31,7 @@ services:
             for (const c of m.catalogs || []) {
               if (keep.has(c.id)) continue;
               // A required genre is how the catalog is browsed at all, so it stays.
-              c.extra = (c.extra || []).filter((e) => e.name !== 'genre' || e.isRequired);
+              c.extra = (c.extra || []).map((e) => (e.name === 'genre' && !e.isRequired ? { name: 'genre', options: [ALL], isRequired: false } : e));
             }
             return JSON.stringify(m);
           } catch {
@@ -36,11 +39,20 @@ services:
           }
         }
 
+        // "genre=Alle" stands for the whole catalog, so it never reaches AIOMetadata.
+        function unalias(url) {
+          const m = url.match(/^(.*\/catalog\/[^/]+\/[^/]+)\/([^/?]+)\.json(\?.*)?$$/);
+          if (!m) return url;
+          const extras = m[2].split('&').filter((p) => decodeURIComponent(p) !== `genre=$${ALL}`);
+          if (extras.length === m[2].split('&').length) return url;
+          return `$${m[1]}$${extras.length ? `/$${extras.join('&')}` : ''}.json$${m[3] || ''}`;
+        }
+
         require('http').createServer((req, res) => {
           const manifest = req.url.split('?')[0].endsWith('/manifest.json');
           const headers = { ...req.headers, host: up.host };
           if (manifest) delete headers['accept-encoding'];
-          const fwd = client.request({ protocol: up.protocol, hostname: up.hostname, port: up.port, path: req.url, method: req.method, headers }, (u) => {
+          const fwd = client.request({ protocol: up.protocol, hostname: up.hostname, port: up.port, path: unalias(req.url), method: req.method, headers }, (u) => {
             if (!manifest || u.statusCode !== 200) {
               res.writeHead(u.statusCode, u.headers);
               return u.pipe(res);

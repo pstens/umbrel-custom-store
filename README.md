@@ -45,7 +45,7 @@ The settings to look at first:
 
 #### One genre list for UHF
 
-UHF's Filme and Serien tabs show one tile per genre per library, and every AIOMetadata catalog carries a genre list. A small filter in front of AIOMetadata (the `aiometadata` service; the server itself runs as `server`) removes the genre list from every catalog except those in `GENRE_CATALOG_IDS`. That's the two "Beliebt" catalogs by default, so UHF shows each genre once, for example "Drama · Beliebt", and all rows stay. Catalogs whose genre is required keep it, because they can't be browsed without one. After changing `GENRE_CATALOG_IDS`, refresh the AIOMetadata catalogs in AIOStreams.
+UHF's Filme and Serien tabs show one tile per genre per library, and every AIOMetadata catalog carries a genre list. A small filter in front of AIOMetadata (the `aiometadata` service; the server itself runs as `server`) keeps the full genre list only on the catalogs in `GENRE_CATALOG_IDS`, which are the two "Beliebt" catalogs by default. Every other catalog gets a single "Alle" genre that opens the whole catalog. UHF then shows one tile per catalog, such as "Alle · Neu im Kino", plus one per genre of "Beliebt", such as "Drama · Beliebt". Catalogs whose genre is required keep their list, because they can't be browsed without one. After changing `GENRE_CATALOG_IDS`, refresh the AIOMetadata catalogs in AIOStreams.
 
 Fixed by the app, not settable: `PORT`, `NODE_ENV`, the SQLite database and cache paths under `${APP_DATA_DIR}/data/addon`, and `REDIS_URL`, which points at the bundled Redis 8 (capped at 512 MB). `MOVIELENS_CRED_KEY` is derived from the device seed. Do not change it, otherwise stored MovieLens logins can no longer be decrypted.
 
@@ -55,10 +55,14 @@ Fixed by the app, not settable: `PORT`, `NODE_ENV`, the SQLite database and cach
 
 | Catalog | What it lists |
 | --- | --- |
-| Im Trend | Movies: released in Germany in the last 60 days. Series: scripted shows and miniseries that premiered in the last 5 years and aired an episode in the last 14 days, on German streaming. Sorted by TMDB popularity. |
-| Beliebt | Most popular titles available on German subscription, free or ad-supported streaming. Series: scripted shows and miniseries that premiered in the last 10 years. |
-| Demnächst | Movies: German theatrical releases in the next 90 days. Series: premieres in the next 90 days, worldwide, because TMDB has no German air dates for series. |
-| Netflix, Prime Video, Disney+, Apple TV, WOW, HBO Max, Paramount+, RTL+, Joyn, Crunchyroll | Most popular titles on that service in Germany. Rentals and purchases are excluded. Series: premiered in the last 10 years. |
+| Im Trend | AIOMetadata's built-in TMDB trending catalog (worldwide, today), movies and series. AIOMetadata names it "TMDB Trending"; rename it on the configure page if you like. |
+| Neu im Kino | Movies released in German cinemas within the last month. |
+| Neu auf Streaming | Movies: released within the last year and now on German subscription, free or ad-supported streaming. Series: scripted shows and miniseries that premiered within the last month on German streaming. |
+| Beliebt | Most popular titles on German subscription, free or ad-supported streaming. Series: scripted shows and miniseries that premiered within the last 10 years. |
+| Demnächst | Movies: German theatrical releases from today on. Series: premieres from today on, worldwide, because TMDB has no German air dates for series. |
+| Netflix, Prime Video, Disney+, Apple TV, WOW, HBO Max, Paramount+, RTL+, Joyn, Crunchyroll | Most popular titles on that service in Germany. Rentals and purchases are excluded. Series: premiered within the last 10 years. |
+
+Date windows use AIOMetadata 3.8.3's named windows (today, last month, last year, last 10 years). That version has no rolling "last N days" windows.
 
 TMDB popularity is global, so "Im Trend" and "Beliebt" mean popular titles that are available or released in Germany. There is no TMDB ranking per country.
 
