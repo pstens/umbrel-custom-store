@@ -6,7 +6,69 @@ services:
       APP_HOST: sparkles-aiometadata_aiometadata_1
       APP_PORT: 3232
 
+  # Named "aiometadata" so the app proxy and Caddy, which address
+  # sparkles-aiometadata_aiometadata_1:3232, reach the filter in front of the
+  # server without any change on their side.
   aiometadata:
+    image: ghcr.io/cedya77/aiometadata:3.8.3@sha256:8a24bd90711e42a817baa20594cba3e08bbd340d859c6c5c9222be6f5f3eafd8
+    restart: on-failure
+    init: true
+    entrypoint: ["node", "-e"]
+    command:
+      - |
+        // Proxies AIOMetadata and drops the genre filter from every catalog except
+        // GENRE_CATALOG_IDS, so Jellyfin apps like UHF list each genre once.
+        const up = new URL(process.env.UPSTREAM);
+        const client = require(up.protocol === 'https:' ? 'https' : 'http');
+        const keep = new Set((process.env.GENRE_CATALOG_IDS || '').split(',').map((s) => s.trim()).filter(Boolean));
+
+        function strip(body) {
+          try {
+            const m = JSON.parse(body);
+            for (const c of m.catalogs || []) {
+              if (keep.has(c.id)) continue;
+              // A required genre is how the catalog is browsed at all, so it stays.
+              c.extra = (c.extra || []).filter((e) => e.name !== 'genre' || e.isRequired);
+            }
+            return JSON.stringify(m);
+          } catch {
+            return body;
+          }
+        }
+
+        require('http').createServer((req, res) => {
+          const manifest = req.url.split('?')[0].endsWith('/manifest.json');
+          const headers = { ...req.headers, host: up.host };
+          if (manifest) delete headers['accept-encoding'];
+          const fwd = client.request({ protocol: up.protocol, hostname: up.hostname, port: up.port, path: req.url, method: req.method, headers }, (u) => {
+            if (!manifest || u.statusCode !== 200) {
+              res.writeHead(u.statusCode, u.headers);
+              return u.pipe(res);
+            }
+            let body = '';
+            u.setEncoding('utf8');
+            u.on('data', (d) => (body += d));
+            u.on('end', () => {
+              const h = { ...u.headers };
+              delete h['content-length'];
+              delete h['transfer-encoding'];
+              res.writeHead(200, h);
+              res.end(strip(body));
+            });
+          });
+          fwd.on('error', (e) => {
+            res.writeHead(502);
+            res.end(String(e));
+          });
+          req.pipe(fwd);
+        }).listen(Number(process.env.PORT || 3232));
+    depends_on:
+      - server
+    environment:
+      UPSTREAM: http://sparkles-aiometadata_server_1:3232
+      GENRE_CATALOG_IDS: ${GENRE_CATALOG_IDS-tmdb.discover.movie.de_popular.sparkles,tmdb.discover.series.de_popular.sparkles}
+
+  server:
     image: ghcr.io/cedya77/aiometadata:3.8.3@sha256:8a24bd90711e42a817baa20594cba3e08bbd340d859c6c5c9222be6f5f3eafd8
     restart: on-failure
     stop_grace_period: 1m

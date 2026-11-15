@@ -43,6 +43,10 @@ The settings to look at first:
 | `TZ` | `Europe/Berlin` | Server time zone. Date windows like "next 90 days" are calculated in this zone. |
 | `CACHE_WARM_LANGUAGE` | `de-DE` | Language used to pre-warm the popular catalogs. |
 
+#### One genre list for UHF
+
+UHF's Filme and Serien tabs show one tile per genre per library, and every AIOMetadata catalog carries a genre list. A small filter in front of AIOMetadata (the `aiometadata` service; the server itself runs as `server`) removes the genre list from every catalog except those in `GENRE_CATALOG_IDS`. That's the two "Beliebt" catalogs by default, so UHF shows each genre once, for example "Drama · Beliebt", and all rows stay. Catalogs whose genre is required keep it, because they can't be browsed without one. After changing `GENRE_CATALOG_IDS`, refresh the AIOMetadata catalogs in AIOStreams.
+
 Fixed by the app, not settable: `PORT`, `NODE_ENV`, the SQLite database and cache paths under `${APP_DATA_DIR}/data/addon`, and `REDIS_URL`, which points at the bundled Redis 8 (capped at 512 MB). `MOVIELENS_CRED_KEY` is derived from the device seed. Do not change it, otherwise stored MovieLens logins can no longer be decrypted.
 
 #### German catalogs
