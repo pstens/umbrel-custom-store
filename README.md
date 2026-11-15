@@ -3,6 +3,7 @@
 This store contains custom umbrelOS packages:
 
 - **AIOStreams** (`sparkles-aiostreams`) — combines Stremio addons, debrid services, and Usenet sources into one configurable stream.
+- **AIOMetadata** (`sparkles-aiometadata`) — catalogs and metadata for AIOStreams, with a German catalog template.
 - **Caddy** (`sparkles-caddy`) — reverse proxy that sits in front of AIOStreams and serves it over HTTPS with a publicly trusted Let's Encrypt certificate.
 
 ### Add the store
@@ -27,6 +28,46 @@ umbrelOS 2.x exposes per-app settings under the app's **Settings → Environment
 
 The encryption key (`SECRET_KEY`) is generated automatically from the device seed and is stable across restarts and updates. It must not be changed after the first start, otherwise saved source credentials can no longer be decrypted. Everything else is configured from the AIOStreams dashboard.
 
+### AIOMetadata
+
+Every server setting from AIOMetadata's `.env.example` (148 of them) is listed under **Settings → Environment variables**, with its upstream description as the note. Empty values are removed before the server starts, so AIOMetadata's own defaults apply. The full reference is AIOMetadata's [ENVIRONMENT_VARIABLES.md](https://github.com/cedya77/aiometadata/blob/dev/docs/ENVIRONMENT_VARIABLES.md).
+
+The settings to look at first:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `HOST_NAME` | `http://<device>.local:3232` | URL that clients use for manifests and artwork. With Caddy, set `https://meta.<parent>.duckdns.org:40444`. |
+| `BUILT_IN_TMDB_API_KEY` | empty | TMDB key used for every config that has no key of its own. It stays on the server. The German template needs TMDB. |
+| `TMDB_API_KEY` | empty | TMDB key prefilled on the configure page. It is sent to every visitor's browser. |
+| `ADMIN_KEY` | derived from the device seed | Admin API key. It also signs the artwork proxy URLs. |
+| `TZ` | `Europe/Berlin` | Server time zone. Date windows like "next 90 days" are calculated in this zone. |
+| `CACHE_WARM_LANGUAGE` | `de-DE` | Language used to pre-warm the popular catalogs. |
+
+Fixed by the app, not settable: `PORT`, `NODE_ENV`, the SQLite database and cache paths under `${APP_DATA_DIR}/data/addon`, and `REDIS_URL`, which points at the bundled Redis 8 (capped at 512 MB). `MOVIELENS_CRED_KEY` is derived from the device seed. Do not change it, otherwise stored MovieLens logins can no longer be decrypted.
+
+#### German catalogs
+
+[`sparkles-aiometadata/templates/germany.json`](sparkles-aiometadata/templates/germany.json) is an AIOMetadata setup template. It replaces the catalog lineup with these catalogs, for movies and for series each:
+
+| Catalog | What it lists |
+| --- | --- |
+| Im Trend | Movies: released in Germany in the last 60 days. Series: episodes aired in the last 14 days on German streaming. Sorted by TMDB popularity. |
+| Beliebt | Most popular titles available on German subscription, free or ad-supported streaming. |
+| Demnächst | Movies: German theatrical releases in the next 90 days. Series: premieres in the next 90 days, worldwide, because TMDB has no German air dates for series. |
+| Netflix, Prime Video, Disney+, Apple TV, WOW, HBO Max, Paramount+, RTL+, Joyn, Crunchyroll | Most popular titles on that service in Germany. Rentals and purchases are excluded. |
+
+TMDB popularity is global, so "Im Trend" and "Beliebt" mean popular titles that are available or released in Germany. There is no TMDB ranking per country.
+
+To apply it, open AIOMetadata → **Setup** → **Share a setup**, load
+
+```
+https://raw.githubusercontent.com/pstens/umbrel-custom-store/master/sparkles-aiometadata/templates/germany.json
+```
+
+then preview and apply. The template also sets the metadata language to `de-DE`. It disables the built-in catalogs, which removes the long genre lists in UHF. Add the manifest URL to AIOStreams afterwards, or refresh it there.
+
+The streaming catalogs use TMDB's German watch-provider IDs. If a row stays empty, pick that service in the Setup page's streaming picker with region **Germany** instead. The picker looks the IDs up live.
+
 ### Caddy
 
 | Variable | Default | Purpose |
@@ -36,6 +77,8 @@ The encryption key (`SECRET_KEY`) is generated automatically from the device see
 | `DUCKDNS_TOKEN` | empty | DuckDNS API token from <https://www.duckdns.org>. |
 | `CADDY_PORT` | `40444` | Host port that publishes the HTTPS site. |
 | `CADDY_UPSTREAM` | `http://sparkles-aiostreams_aiostreams_1:3000` | Address Caddy proxies requests to. The default points at the AIOStreams app on umbrelOS's shared Docker network. |
+| `AIOMETADATA_SUBDOMAIN` | `meta` | Child subdomain that serves AIOMetadata. Answers 502 until the AIOMetadata app is installed. |
+| `AIOMETADATA_UPSTREAM` | `http://sparkles-aiometadata_aiometadata_1:3232` | Address Caddy proxies AIOMetadata requests to. |
 
 Caddy serves three entry points:
 
@@ -129,6 +172,7 @@ Each package lives in a directory whose name matches its `id`. Validate the mani
 ```sh
 docker compose -f sparkles-aiostreams/docker-compose.yml config
 docker compose -f sparkles-caddy/docker-compose.yml config
+docker compose -f sparkles-aiometadata/docker-compose.yml config
 ```
 
 umbrelOS removes the `app_proxy` service from the Compose file at runtime, so a bare `docker compose config` needs an overlay that provides it:

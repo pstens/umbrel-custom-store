@@ -1,0 +1,1014 @@
+{
+  "kind": "aiometadata.setupTemplate",
+  "version": 1,
+  "exportedAt": "2026-11-15T00:00:00.000Z",
+  "template": {
+    "id": "sparkles.germany",
+    "name": "Deutschland",
+    "tagline": "Trend, Beliebt und Demnächst in Deutschland, plus deutsche Streamingdienste",
+    "lineup": {
+      "catalogIds": []
+    },
+    "catalogs": [
+      {
+        "id": "tmdb.discover.movie.de_trending.sparkles",
+        "type": "movie",
+        "name": "Im Trend",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "region": "DE",
+              "with_release_type": "3|4|5|6",
+              "vote_count.gte": 10,
+              "release_date.gte": "__tmdb_date__:last_60_days:from",
+              "release_date.lte": "__tmdb_date__:today:to"
+            },
+            "formState": {
+              "catalogName": "Im Trend",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_popular.sparkles",
+        "type": "movie",
+        "name": "Beliebt",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "vote_count.gte": 300
+            },
+            "formState": {
+              "catalogName": "Beliebt",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_upcoming.sparkles",
+        "type": "movie",
+        "name": "Demnächst",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "region": "DE",
+              "with_release_type": "2|3",
+              "release_date.gte": "__tmdb_date__:today:from",
+              "release_date.lte": "__tmdb_date__:next_90_days:to"
+            },
+            "formState": {
+              "catalogName": "Demnächst",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_trending.sparkles",
+        "type": "series",
+        "name": "Im Trend",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "vote_count.gte": 10,
+              "air_date.gte": "__tmdb_date__:last_14_days:from",
+              "air_date.lte": "__tmdb_date__:today:to"
+            },
+            "formState": {
+              "catalogName": "Im Trend",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_popular.sparkles",
+        "type": "series",
+        "name": "Beliebt",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "vote_count.gte": 300
+            },
+            "formState": {
+              "catalogName": "Beliebt",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_upcoming.sparkles",
+        "type": "series",
+        "name": "Demnächst",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "first_air_date.gte": "__tmdb_date__:today:from",
+              "first_air_date.lte": "__tmdb_date__:next_90_days:to"
+            },
+            "formState": {
+              "catalogName": "Demnächst",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_netflix.sparkles",
+        "type": "movie",
+        "name": "Netflix",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "8",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Netflix",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 8,
+                  "label": "Netflix"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_prime.sparkles",
+        "type": "movie",
+        "name": "Prime Video",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "9",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Prime Video",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 9,
+                  "label": "Prime Video"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_disney.sparkles",
+        "type": "movie",
+        "name": "Disney+",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "337",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Disney+",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 337,
+                  "label": "Disney+"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_apple.sparkles",
+        "type": "movie",
+        "name": "Apple TV",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "350",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Apple TV",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 350,
+                  "label": "Apple TV"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_wow.sparkles",
+        "type": "movie",
+        "name": "WOW",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "30",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "WOW",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 30,
+                  "label": "WOW"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_hbo.sparkles",
+        "type": "movie",
+        "name": "HBO Max",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "1899",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "HBO Max",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 1899,
+                  "label": "HBO Max"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_paramount.sparkles",
+        "type": "movie",
+        "name": "Paramount+",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "531",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Paramount+",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 531,
+                  "label": "Paramount+"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_rtl.sparkles",
+        "type": "movie",
+        "name": "RTL+",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "298",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "RTL+",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 298,
+                  "label": "RTL+"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_joyn.sparkles",
+        "type": "movie",
+        "name": "Joyn",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "304",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Joyn",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 304,
+                  "label": "Joyn"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.movie.de_crunchyroll.sparkles",
+        "type": "movie",
+        "name": "Crunchyroll",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (movie)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "movie",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "283",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Crunchyroll",
+              "discoverSource": "tmdb",
+              "catalogType": "movie",
+              "tmdbMediaType": "movie",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 283,
+                  "label": "Crunchyroll"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_netflix.sparkles",
+        "type": "series",
+        "name": "Netflix",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "8",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Netflix",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 8,
+                  "label": "Netflix"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_prime.sparkles",
+        "type": "series",
+        "name": "Prime Video",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "9",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Prime Video",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 9,
+                  "label": "Prime Video"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_disney.sparkles",
+        "type": "series",
+        "name": "Disney+",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "337",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Disney+",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 337,
+                  "label": "Disney+"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_apple.sparkles",
+        "type": "series",
+        "name": "Apple TV",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "350",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Apple TV",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 350,
+                  "label": "Apple TV"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_wow.sparkles",
+        "type": "series",
+        "name": "WOW",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "30",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "WOW",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 30,
+                  "label": "WOW"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_hbo.sparkles",
+        "type": "series",
+        "name": "HBO Max",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "1899",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "HBO Max",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 1899,
+                  "label": "HBO Max"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_paramount.sparkles",
+        "type": "series",
+        "name": "Paramount+",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "531",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Paramount+",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 531,
+                  "label": "Paramount+"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_rtl.sparkles",
+        "type": "series",
+        "name": "RTL+",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "298",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "RTL+",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 298,
+                  "label": "RTL+"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_joyn.sparkles",
+        "type": "series",
+        "name": "Joyn",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "304",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Joyn",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 304,
+                  "label": "Joyn"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      },
+      {
+        "id": "tmdb.discover.series.de_crunchyroll.sparkles",
+        "type": "series",
+        "name": "Crunchyroll",
+        "enabled": true,
+        "showInHome": true,
+        "source": "tmdb",
+        "metadata": {
+          "description": "TMDB Discover (tv)",
+          "discover": {
+            "version": 2,
+            "source": "tmdb",
+            "mediaType": "tv",
+            "params": {
+              "sort_by": "popularity.desc",
+              "include_adult": false,
+              "with_watch_monetization_types": "flatrate|free|ads",
+              "watch_region": "DE",
+              "with_watch_providers": "283",
+              "vote_count.gte": 10
+            },
+            "formState": {
+              "catalogName": "Crunchyroll",
+              "discoverSource": "tmdb",
+              "catalogType": "series",
+              "tmdbMediaType": "tv",
+              "sortBy": "popularity.desc",
+              "includeAdult": false,
+              "watchRegion": "DE",
+              "watchProviders": [
+                {
+                  "id": 283,
+                  "label": "Crunchyroll"
+                }
+              ],
+              "providerJoinMode": "or"
+            }
+          }
+        }
+      }
+    ],
+    "settings": {
+      "language": "de-DE"
+    },
+    "requires": [
+      "tmdb"
+    ]
+  }
+}

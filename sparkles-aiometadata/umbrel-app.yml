@@ -1,0 +1,778 @@
+manifestVersion: "2.0"
+id: sparkles-aiometadata
+storage:
+  dataRoot: data
+environment:
+  - name: HOST_NAME
+    services:
+      - aiometadata
+    default: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+    note: "Public URL clients use for manifests and artwork. With the Caddy app, set https://meta.<parent>.duckdns.org:40444."
+  - name: LOG_LEVEL
+    services:
+      - aiometadata
+    default: ""
+    note: "Set the logging level. Options: 'silent', 'fatal', 'error', 'warn', 'info', 'success', 'debug', 'trace', 'verbose'. (Default: 'info' for production, 'debug' for development)"
+  - name: LOG_BUFFER_SIZE
+    services:
+      - aiometadata
+    default: ""
+    note: "Maximum number of log entries kept in the in-memory ring buffer for the dashboard logs tab. (Default: 10000)"
+  - name: RESPONSE_COMPRESSION_ENABLED
+    services:
+      - aiometadata
+    default: ""
+    note: "Compress HTTP responses with gzip or brotli, whichever the client negotiates. (Default: true) A 20-item catalog page drops from about 99 KB to about 22 KB for roughly 1 ms of CPU. Images, server-sent events and responses under 1 KB are skipped. Set false only if a proxy in front is already compressing."
+  - name: CATALOG_REFRESH_AHEAD_ENABLED
+    services:
+      - aiometadata
+    default: ""
+    note: "Rebuild a catalog in the background when a request arrives near the end of its cache lifetime, so the cached copy is served immediately and the rebuild never lands on a user request. (Default: true) Cache TTLs are unchanged, so nothing is served staler than CATALOG_TTL allows."
+  - name: CATALOG_REFRESH_AHEAD_FRACTION
+    services:
+      - aiometadata
+    default: ""
+    note: "How much of an entry's lifetime counts as due for a background rebuild. (Default: 0.1) 0.1 is the final tenth: the last 2.4 hours of a 24 hour catalog."
+  - name: CATALOG_REFRESH_AHEAD_MAX_CONCURRENT
+    services:
+      - aiometadata
+    default: ""
+    note: "How many background catalog rebuilds may run at once. (Default: 3) Requests over the limit are skipped, not queued - the entry is still fresh."
+  - name: ADMIN_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Secret for admin endpoints; also signs artwork proxy URLs. Empty uses a key derived from this device."
+  - name: IMAGE_PROXY_SIGNING_SECRET
+    services:
+      - aiometadata
+    default: ""
+    note: "HMAC secret signing the /poster, /logo and /background proxy URLs. Falls back to ADMIN_KEY; unsigned if neither is set."
+  - name: ADDON_PASSWORD
+    services:
+      - aiometadata
+    default: ""
+    note: "Password for protected endpoints (if enabled in your deployment)"
+  - name: DISABLE_METRICS
+    services:
+      - aiometadata
+    default: ""
+    note: "Set to \"true\" to disable all telemetry/metrics collection for the dashboard."
+  - name: DASHBOARD_METADATA_LANGUAGE
+    services:
+      - aiometadata
+    default: ""
+    note: "Preferred language code for popular-content titles shown on the dashboard Content tab. A title captured in this language is not overwritten by requests in other languages. Leave blank to always use the most recent request's language. (Default: en)"
+  - name: BUILT_IN_TMDB_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "These cover any user who has not supplied their own key, and they never leave the server: /api/config publishes only the fact that they are set. This is the way to fund an instance other people use. Every request from every user is billed to them, so mind the provider's rate limits."
+  - name: BUILT_IN_TVDB_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: BUILT_IN_FANART_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: BUILT_IN_RPDB_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: BUILT_IN_MDBLIST_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "These two exist for the same reason but cost money per call, and every user of the instance spends them. MDBList bills past 1000 calls a day and Gemini bills per query, so set them on a private instance only. On a public one leave them blank: users who want MDBList catalogs or AI search bring their own key."
+  - name: BUILT_IN_GEMINI_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: AUTH_REQUIRE_SIGNIN
+    services:
+      - aiometadata
+    default: ""
+    note: "WARNING: TMDB_API_KEY, TVDB_API_KEY, FANART_API_KEY, RPDB_API_KEY, MDBLIST_API_KEY and GEMINI_API_KEY are served to every visitor by /api/config, in full, so the configure page can prefill them. That path stays open even with"
+  - name: TMDB_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "only where you would hand your keys to every user. On a shared instance leave them blank, use the BUILT_IN_ keys above, and let users bring their own. TRAKT_CLIENT_ID and SIMKL_CLIENT_ID are in that payload too, which is expected: an OAuth client id is public by design. Their secrets are not published, and those are the ones that matter. A copied client id only lets someone else's traffic..."
+  - name: TVDB_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Your TVDB API key. Optional but highly recommended for series and some anime metadata."
+  - name: FANART_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Your Fanart.tv API key. Optional, used for fetching high-quality logos and backgrounds."
+  - name: FANART_API_PROJECT_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Fanart.tv project API key. When set, user keys are sent as clientKey for faster image access."
+  - name: RPDB_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Your Rating Poster DB (RPDB) API key. Optional, for displaying ratings on posters."
+  - name: MDBLIST_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Your MDBList API key. Optional, for integrating MDBList catalogs."
+  - name: GEMINI_API_KEY
+    services:
+      - aiometadata
+    default: ""
+    note: "Your Gemini API key. Optional, for AI features."
+  - name: SIMKL_CLIENT_ID
+    services:
+      - aiometadata
+    default: ""
+    note: "Your SimKL client ID"
+  - name: SIMKL_CLIENT_SECRET
+    services:
+      - aiometadata
+    default: ""
+    note: "Your SimKL client secret. Only needed for the browser-redirect OAuth flow."
+  - name: SIMKL_AUTH_MODE
+    services:
+      - aiometadata
+    default: ""
+    note: "Which SimKL connection flow(s) to offer: oauth, pin, or both. \"pin\" needs only SIMKL_CLIENT_ID - no client secret and no publicly reachable callback URL - which makes it the right choice for private, self-hosted instances. Default: pin when SIMKL_CLIENT_SECRET is empty, otherwise oauth."
+  - name: SIMKL_REDIRECT_URI
+    services:
+      - aiometadata
+    default: ""
+    note: "The redirect URI for SimKL OAuth (must match your SimKL app settings) Example: https://your-domain.com/api/auth/simkl/callback"
+  - name: SIMKL_ACTIVITIES_TTL
+    services:
+      - aiometadata
+    default: ""
+    note: "Time-to-live (in seconds) for caching SimKL activity checks. Reduces API spam when paginating, and caps how long Up Next and Hide Simkl Watched lag behind what you just watched. This is the default; users on a V2 connection can set their own interval in the Simkl integration. Default: 1800 (30 minutes)"
+  - name: JIKAN_API_BASE
+    services:
+      - aiometadata
+    default: ""
+    note: "Jikan v4 compatible API base URL, the source for MAL catalogs, search and anime metadata. Empty means the public Tenrai API (120 requests a minute per IP). Point it at a self-hosted Jikan (see README) for more headroom, e.g. http://jikan_rest:8080/v4 when running both on the same Docker network."
+  - name: JIKAN_ENABLED
+    services:
+      - aiometadata
+    default: ""
+    note: "Set to false to turn off MAL catalogs, search and metadata. MAL lists and tracking use the official MAL API and keep working. (Default: true)"
+  - name: MAL_PAGE_SIZE
+    services:
+      - aiometadata
+    default: ""
+    note: "Items per page for all MAL/Jikan catalogs. (Default: 25) Jikan caps this at 25 by default. Only raise it on a self-hosted instance, and keep it <= the instance's MAX_RESULTS_PER_PAGE or requests will 400."
+  - name: ANILIST_CLIENT_ID
+    services:
+      - aiometadata
+    default: ""
+    note: "AniList API credentials (required for AniList integration) Get these from https://anilist.co/settings/developer Your AniList client ID"
+  - name: ANILIST_CLIENT_SECRET
+    services:
+      - aiometadata
+    default: ""
+    note: "Your AniList client secret"
+  - name: ANILIST_REDIRECT_URI
+    services:
+      - aiometadata
+    default: ""
+    note: "The redirect URI for AniList OAuth (must match your AniList app settings) Example: https://your-domain.com/anilist/callback"
+  - name: MAL_CLIENT_ID
+    services:
+      - aiometadata
+    default: ""
+    note: "MyAnimeList API credentials (required for MAL watch tracking) Get these from https://myanimelist.net/apiconfig Your MAL client ID"
+  - name: MAL_CLIENT_SECRET
+    services:
+      - aiometadata
+    default: ""
+    note: "Your MAL client secret"
+  - name: MAL_REDIRECT_URI
+    services:
+      - aiometadata
+    default: ""
+    note: "The redirect URI for MAL OAuth (must match your MAL app settings) Example: https://your-domain.com/mal/callback"
+  - name: TRAKT_CLIENT_ID
+    services:
+      - aiometadata
+    default: ""
+    note: "Trakt API credentials (required for Trakt integration) Get these from https://trakt.tv/oauth/applications Your Trakt client ID"
+  - name: TRAKT_CLIENT_SECRET
+    services:
+      - aiometadata
+    default: ""
+    note: "Your Trakt client secret"
+  - name: TRAKT_REDIRECT_URI
+    services:
+      - aiometadata
+    default: ""
+    note: "The redirect URI for Trakt OAuth (must match your Trakt app settings) Example: https://your-domain.com/api/auth/trakt/callback"
+  - name: DISABLE_TRAKT_SEARCH
+    services:
+      - aiometadata
+    default: ""
+    note: "Disable trakt as a search option (recommended on public instances)"
+  - name: TRAKT_CONCURRENCY
+    services:
+      - aiometadata
+    default: ""
+    note: "Max number of trakt parallel requests (recommend 10-15 for selfhosters)"
+  - name: META_CONCURRENCY
+    services:
+      - aiometadata
+    default: ""
+    note: "Max concurrent getMeta() calls per catalog request (default: unlimited) Set to 20-30 on public instances to limit memory spikes from concurrent users."
+  - name: HEAP_LOG_INTERVAL_MIN
+    services:
+      - aiometadata
+    default: ""
+    note: "Log heap and in-memory cache stats to console at this interval (in minutes). 0 or unset disables."
+  - name: POSTER_PROXY_TIMEOUT_MS
+    services:
+      - aiometadata
+    default: ""
+    note: "Milliseconds to wait for an upstream poster/art image before serving the fallback. (Default: 10000) Raise this if a slow rating/poster-generation service times out on first render."
+  - name: PREFER_SMALLER_LOGOS_TMDB
+    services:
+      - aiometadata
+    default: ""
+    note: "Request smaller images from TMDB to save space. The three below are OFF by default.. Logos are the safest win, as they can be huge from the source but are rendered small by the client."
+  - name: PREFER_SMALLER_BACKDROPS_TMDB
+    services:
+      - aiometadata
+    default: ""
+    note: "Requesting smaller backgrounds is usually not recommended especially if they're being rendered on high resolution (4k) screens, enable this if saving space/bandwidth is more important than sharpness"
+  - name: PREFER_SMALLER_LANDSCAPE_TMDB
+    services:
+      - aiometadata
+    default: ""
+    note: "Landscape images are safer, as they are usually rendered in smaller boxes"
+  - name: PREFER_SMALLER_POSTERS_TMDB
+    services:
+      - aiometadata
+    default: ""
+    note: "Posters are the exception: they have always been requested at w600_and_h900_bestv2, so this one is ON by default and setting it to false is what changes artwork. It is also the most expensive to flip - a catalog page pulls one poster per tile."
+  - name: ENABLE_BUILTIN_POSTER_CACHE
+    services:
+      - aiometadata
+    default: ""
+    note: "Cache artwork on disk and serve it from /poster-cache on this addon's own port. No extra container, port, or volume: images are stored under addon/data/poster-cache, inside the data volume you already mount. Multi-replica/k8s deploys get an independent cache per replica; run a shared external proxy instead if that matters."
+  - name: POSTER_CACHE_BACKGROUNDS
+    services:
+      - aiometadata
+    default: ""
+    note: "Posters are cached by default. Everything below is opt-in, so turning the cache on never changes disk usage unexpectedly. All are also toggles in the dashboard. Backgrounds are the largest images served \u2014 the biggest bandwidth win."
+  - name: POSTER_CACHE_LANDSCAPE_POSTERS
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: POSTER_CACHE_LOGOS
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: POSTER_CACHE_THUMBNAILS
+    services:
+      - aiometadata
+    default: ""
+    note: "Episode thumbnails are by far the most numerous: one long-running series can add hundreds of images. Expect disk usage to grow quickly."
+  - name: POSTER_CACHE_PROCESSED_IMAGES
+    services:
+      - aiometadata
+    default: ""
+    note: "Cache the images the addon renders itself: rating-overlaid posters (when Proxy Rating & Custom Art is on) plus the blur/resize/banner-to-background transforms. ON by default with the cache; set false only to keep these out of it. Custom art URLs pass through unchanged, so they follow their own type's toggle above."
+  - name: POSTER_PROXY_ALLOW_PRIVATE
+    services:
+      - aiometadata
+    default: ""
+    note: "Whether a signed art URL may reach a private/LAN address. Fine when you are the only one configuring art patterns. Set false on a public multi-user instance: patterns are user-supplied, so a user could aim one inside your network. (Default: true)"
+  - name: POSTER_CACHE_ALLOWED_HOSTS
+    services:
+      - aiometadata
+    default: ""
+    note: "Comma-separated hosts allowed even when they resolve to a private/LAN address. Needed if your rating/art provider (e.g. a self-hosted PosterPlus) runs on your own network; without it those fetches are blocked as SSRF. Everything else stays blocked."
+  - name: POSTER_CACHE_MAX_SIZE
+    services:
+      - aiometadata
+    default: ""
+    note: "DISK budget. Least-recently-used images are evicted once exceeded. (Default: 10g)"
+  - name: POSTER_CACHE_MEMORY_SIZE
+    services:
+      - aiometadata
+    default: ""
+    note: "RAM budget for the hottest images, layered in front of the disk cache. A memory hit skips the disk read AND its per-request allocation, lowering GC pressure. This is on top of the addon's own footprint. Set to 0 for disk only. (Default: 128m)"
+  - name: POSTER_CACHE_TTL_DAYS
+    services:
+      - aiometadata
+    default: ""
+    note: "How long a cached image stays fresh. Fractional allowed (0.5 = 12h); 0 never expires. Expiry is not a re-download: sources that send an ETag or Last-Modified are asked to confirm the stored copy, and a 304 restarts validity with no body transferred. If you use a rating poster service or a custom art URL pattern, give its domain a shorter rule below \u2014 those URLs name a slot rather than a file,..."
+  - name: POSTER_CACHE_INFER_TTL
+    services:
+      - aiometadata
+    default: ""
+    note: "Derive each image's validity from the headers its own source sent, instead of the flat value above; where a source promises nothing we can act on, the flat value still applies. Expect a year for TMDB, days for MAL and metahub, hours or less for rating services. A source asking not to be cached at all is then honoured too, and its image is served without being stored. Not a substitute for a..."
+  - name: POSTER_CACHE_PROVIDER_POLICIES
+    services:
+      - aiometadata
+    default: ""
+    note: "Per-provider overrides, as a JSON list. Each rule names a domain and one of \"default\" (the flat validity above), \"infer\" (follow that provider's own headers), \"custom\" (a fixed \"ttl\" such as 6h, 30d, 1y) or \"bypass\" (serve without ever storing). A rule beats the toggle above, which beats the flat validity. A domain covers its subdomains, and the more specific rule wins, and one rule covers..."
+  - name: POSTER_PROXY_MAX_AGE_DAYS
+    services:
+      - aiometadata
+    default: ""
+    note: "How long players/browsers may keep an image from the /poster, /logo and /background proxy routes. Short by default: those routes revalidate on request parameters, not bytes, so only expiry picks up changed art. Fractional allowed (0.25 = 6h), 0 never expires, capped by the served image's own remaining validity. (Default: 1)"
+  - name: POSTER_CACHE_INACTIVE_DAYS
+    services:
+      - aiometadata
+    default: ""
+    note: "Drop images not requested for this many days. (Default: 30)"
+  - name: POSTER_CACHE_MAX_OBJECT_BYTES
+    services:
+      - aiometadata
+    default: ""
+    note: "Images larger than this are passed through to the client uncached, so one oversized asset cannot consume the whole budget. (Default: 20m)"
+  - name: POSTER_CACHE_FETCH_CONCURRENCY
+    services:
+      - aiometadata
+    default: ""
+    note: "Ceiling on simultaneous downloads of uncached images. Each in-flight fetch holds an image in memory, so this bounds peak memory during a burst of cache misses. Duplicate requests for the same image are coalesced and don't use a slot. (Default: 128)"
+  - name: POSTER_CACHE_STREAM_THRESHOLD
+    services:
+      - aiometadata
+    default: ""
+    note: "Cached images above this are streamed from disk instead of buffered, so bursts of large artwork can't pile up on the heap. (Default: 256k)"
+  - name: POSTER_CACHE_LOG_REQUESTS
+    services:
+      - aiometadata
+    default: ""
+    note: "Log every image request. Off by default: at scale it floods the log buffer and evicts everything else. A one-line summary is logged each minute regardless."
+  - name: POSTER_PROXY_PREFIX_URL
+    services:
+      - aiometadata
+    default: ""
+    note: "Public URL clients fetch images through. Leave empty with the built-in cache \u2014 it derives {HOST_NAME}/poster-cache automatically. Set it only when pointing at an external caching proxy."
+  - name: POSTER_WARMUP_URL
+    services:
+      - aiometadata
+    default: ""
+    note: "Internal URL used for server-side image warming (defaults to the built-in cache on 127.0.0.1 when enabled; otherwise falls back to POSTER_PROXY_PREFIX_URL)."
+  - name: TRAKT_MIN_TIME
+    services:
+      - aiometadata
+    default: ""
+    note: "Spacing between requests (recommend 100ms for selfhosters)"
+  - name: CATALOG_TTL
+    services:
+      - aiometadata
+    default: ""
+    note: "Catalog cache time-to-live in seconds (default: 86400 = 24 hours)"
+  - name: META_TTL
+    services:
+      - aiometadata
+    default: ""
+    note: "Meta cache time-to-live in seconds (default: 604800 = 7 days)"
+  - name: TZ
+    services:
+      - aiometadata
+    default: "Europe/Berlin"
+    note: "Set the timezone for the server (e.g., America/New_York)"
+  - name: ENABLE_CACHE_WARMING
+    services:
+      - aiometadata
+    default: ""
+    note: "Set to \"false\" to disable automatic cache warming on startup. (Default: true)"
+  - name: CACHE_WARMUP_UUIDS
+    services:
+      - aiometadata
+    default: ""
+    note: "Specify a custom UUID to use for the cache warming config. Highly recommended for private instances."
+  - name: CACHE_WARMUP_UUID
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: CACHE_WARMUP_MODE
+    services:
+      - aiometadata
+    default: ""
+    note: "Choose warm-up mode, 'essential' warms select TMDB/MAL catalogs with limited depth whilst 'comprehensive' warms all the catalogs present in a UUID, at the max depth specified below NOTE: comprehensive *requires* a CACHE_WARMUP_UUID to be set"
+  - name: CATALOG_WARMUP_INTERVAL_HOURS
+    services:
+      - aiometadata
+    default: ""
+    note: "How often (in hours) to warm popular TMDB content. (Default: 24, Minimum: 12)"
+  - name: CATALOG_WARMUP_INITIAL_DELAY_SECONDS
+    services:
+      - aiometadata
+    default: ""
+    note: "Initial delay before starting catalog warming (in seconds)"
+  - name: CATALOG_WARMUP_MAX_PAGES_PER_CATALOG
+    services:
+      - aiometadata
+    default: ""
+    note: "Set the max page number to warm per catalog (Default: 100)"
+  - name: CATALOG_WARMUP_RESUME_ON_RESTART
+    services:
+      - aiometadata
+    default: ""
+    note: "Resume warming on restart (Default: true)"
+  - name: CATALOG_WARMUP_WINDOW
+    services:
+      - aiometadata
+    default: ""
+    note: "Hours catalog warming may start, in the TZ time zone (e.g., 04:00-06:00). Empty: any time"
+  - name: CATALOG_WARMUP_TASK_DELAY_MS
+    services:
+      - aiometadata
+    default: ""
+    note: "Delay between catalog warmup tasks (in ms)"
+  - name: CATALOG_WARMUP_LOG_LEVEL
+    services:
+      - aiometadata
+    default: ""
+    note: "Logging level for catalog warming"
+  - name: CATALOG_WARMUP_AUTO_ON_EPOCH_CHANGE
+    services:
+      - aiometadata
+    default: ""
+    note: "Auto warmup when CACHE_EPOCH is bumped, which supersedes every cached key. (Formerly CATALOG_WARMUP_AUTO_ON_VERSION_CHANGE, still accepted.)"
+  - name: TMDB_POPULAR_WARMING_ENABLED
+    services:
+      - aiometadata
+    default: ""
+    note: "Set to \"false\" to disable warming of popular TMDB content. (Default: true)"
+  - name: CACHE_WARM_INTERVAL_HOURS
+    services:
+      - aiometadata
+    default: ""
+    note: "How often (in hours) to warm cache (Default: 24)"
+  - name: CACHE_WARM_LANGUAGE
+    services:
+      - aiometadata
+    default: "de-DE"
+    note: "Language to use for cache warming (Default: en-US)"
+  - name: CACHE_WARMUP_ON_STARTUP
+    services:
+      - aiometadata
+    default: ""
+    note: "Enable cache warmup on startup (Default: true)"
+  - name: MAL_WARMUP_ENABLED
+    services:
+      - aiometadata
+    default: ""
+    note: "Set to \"false\" to disable MAL-specific catalog warming. (Default: true)"
+  - name: MAL_WARMUP_INTERVAL_HOURS
+    services:
+      - aiometadata
+    default: ""
+    note: "Interval in hours for MAL catalog warming. (Default: 6)"
+  - name: MAL_WARMUP_INITIAL_DELAY_SECONDS
+    services:
+      - aiometadata
+    default: ""
+    note: "Initial delay before starting MAL warming (in seconds)"
+  - name: MAL_WARMUP_TASK_DELAY_MS
+    services:
+      - aiometadata
+    default: ""
+    note: "Delay between MAL warmup tasks (in ms)"
+  - name: MAL_WARMUP_WINDOW
+    services:
+      - aiometadata
+    default: ""
+    note: "Hours MAL warming may start, in the TZ time zone (e.g., 04:00-06:00). Empty: any time"
+  - name: MAL_WARMUP_PRIORITY_PAGES
+    services:
+      - aiometadata
+    default: ""
+    note: "Number of priority pages for MAL warming"
+  - name: MAL_WARMUP_METADATA
+    services:
+      - aiometadata
+    default: ""
+    note: "Enable/disable metadata warming for MAL"
+  - name: MAL_WARMUP_PRIORITY
+    services:
+      - aiometadata
+    default: ""
+    note: "Enable priority warming for MAL"
+  - name: MAL_WARMUP_SCHEDULE
+    services:
+      - aiometadata
+    default: ""
+    note: "Enable scheduled MAL warming"
+  - name: MAL_WARMUP_DECADES
+    services:
+      - aiometadata
+    default: ""
+    note: "Enable decade-based MAL warming"
+  - name: MAL_WARMUP_SFW
+    services:
+      - aiometadata
+    default: ""
+    note: "Enable SFW mode for MAL warming"
+  - name: MAL_WARMUP_LOG_LEVEL
+    services:
+      - aiometadata
+    default: ""
+    note: "Logging level for MAL warming"
+  - name: CACHE_CLEANUP_AUTO_ENABLED
+    services:
+      - aiometadata
+    default: ""
+    note: "Enable automatic cache cleanup (Default: true)"
+  - name: CACHE_CLEANUP_WINDOW
+    services:
+      - aiometadata
+    default: ""
+    note: "Hours automatic cache cleanup may run, in the TZ time zone (e.g., 03:00-05:00). Empty: any time"
+  - name: FANART_CLIENT_CACHE_MAX
+    services:
+      - aiometadata
+    default: ""
+    note: "Max entries in the per-user Fanart.tv client cache. (Default: 2000) Sized for popular public instances. Lower on memory-constrained self-hosts."
+  - name: TMDB_SCRAPED_IMDB_CACHE_MAX
+    services:
+      - aiometadata
+    default: ""
+    note: "Max entries in the TMDB scraped-IMDb-ID cache. (Default: 10000)"
+  - name: CATALOG_LIST_ITEMS_SIZE
+    services:
+      - aiometadata
+    default: ""
+    note: "The number of items to display per page in catalogs. (Default: 20)"
+  - name: MAX_CATALOGS
+    services:
+      - aiometadata
+    default: ""
+    note: "Optional cap on catalog count per user configuration. When set to a positive integer, saving a configuration with more catalogs than this limit is rejected. Leaving this unset preserves the unbounded behaviour."
+  - name: ADDON_NAME_SUFFIX
+    services:
+      - aiometadata
+    default: ""
+    note: "An optional suffix to add to the addon's name in the manifest (e.g., \"| My Server\")."
+  - name: CUSTOM_DESCRIPTION_BLURB
+    services:
+      - aiometadata
+    default: ""
+    note: "Optional custom HTML blurb to display on the configuration page."
+  - name: SOCKS_PROXY_URL
+    services:
+      - aiometadata
+    default: ""
+    note: "Optional SOCKS proxy for all requests (e.g., socks5://user:pass@host:port)."
+  - name: HTTP_PROXY
+    services:
+      - aiometadata
+    default: ""
+    note: "Optional HTTP proxy for all requests."
+  - name: HTTPS_PROXY
+    services:
+      - aiometadata
+    default: ""
+    note: "Optional HTTPS proxy for all requests."
+  - name: TMDB_SOCKS_PROXY_URL
+    services:
+      - aiometadata
+    default: ""
+    note: "Optional SOCKS proxy for TMDB requests (e.g., socks5://user:pass@host:port)."
+  - name: MAL_SOCKS_PROXY_URL
+    services:
+      - aiometadata
+    default: ""
+    note: "Optional SOCKS proxy for Jikan/MAL requests."
+  - name: ADDON_LOGO_URL
+    services:
+      - aiometadata
+    default: ""
+    note: "Optional: Override the logo URL in the manifest"
+  - name: ENABLE_MOVIELENS_SYNC
+    services:
+      - aiometadata
+    default: ""
+    note: "Enable the scheduled background job that re-syncs Trakt/Simkl/MDBList ratings into connected MovieLens accounts. (Default: true) Requires a restart."
+  - name: MOVIELENS_SYNC_INTERVAL_HOURS
+    services:
+      - aiometadata
+    default: ""
+    note: "How often the scheduled job re-syncs ratings, in hours. (Default: 24) Requires a restart."
+  - name: MOVIELENS_MANUAL_SYNC_COOLDOWN_SECONDS
+    services:
+      - aiometadata
+    default: ""
+    note: "Minimum seconds between user-triggered \"Import ratings\" runs. (Default: 21600)"
+  - name: MOVIELENS_REQUEST_TIMEOUT_MS
+    services:
+      - aiometadata
+    default: ""
+    note: "Timeout for requests to the MovieLens API, in ms. (Default: 25000)"
+  - name: MOVIELENS_API_BASE
+    services:
+      - aiometadata
+    default: ""
+    note: "Left commented so a copied .env does not pin these past a newer default. Base URL for the MovieLens API. (Default: https://movielens.org/api)"
+  - name: MOVIELENS_USER_AGENT
+    services:
+      - aiometadata
+    default: ""
+    note: "User-Agent sent to MovieLens. MovieLens sits behind Cloudflare and rejects requests without a browser-like User-Agent."
+  - name: MOVIELENS_LOGIN_REFERER
+    services:
+      - aiometadata
+    default: ""
+    note: "Referer header used for the MovieLens login request. (Default: https://movielens.org/login)"
+  - name: MOVIELENS_IMPORT_REFERER
+    services:
+      - aiometadata
+    default: ""
+    note: "Referer header used for the MovieLens CSV ratings-import request."
+  - name: MOVIELENS_CATALOG_TTL_SECONDS
+    services:
+      - aiometadata
+    default: ""
+    note: "Time-to-live for MovieLens catalog cache entries, in seconds. (Default: 3600) Per-catalog cacheTTL set in the UI overrides this."
+  - name: MOVIELENS_USERMETA_TTL_SECONDS
+    services:
+      - aiometadata
+    default: ""
+    note: "Time-to-live for cached MovieLens account metadata, in seconds. (Default: 43200) Covers the recommendation engine and taste tags. Lower this to react faster when a user upgrades from the \"bard\" engine to a personalized one. Replaces MOVIELENS_GROUPTAGS_TTL_SECONDS, which is still honoured as a fallback."
+  - name: MOVIELENS_LIST_MAX_PAGES
+    services:
+      - aiometadata
+    default: ""
+    note: "Safety cap on pages fetched when paginating a MovieLens user list. (Default: 50)"
+  - name: METAHUB_IMAGE_EXISTS_TTL_SECONDS
+    services:
+      - aiometadata
+    default: ""
+    note: "Time-to-live for cached metahub logo/image existence checks, in seconds. (Default: 86400)"
+  - name: METAHUB_IMAGE_HEAD_TIMEOUT_MS
+    services:
+      - aiometadata
+    default: ""
+    note: "Timeout for the metahub image existence HEAD request, in ms. (Default: 4000)"
+  - name: CACHE_EPOCH
+    services:
+      - aiometadata
+    default: ""
+    note: "Cache epoch \u2014 bumped by hand when a cached payload's shape changes, so ordinary releases no longer discard good cache. Governs both tiers: Redis keys are prefixed with it, and cold-store rows record it. Raise it to force a rebuild without waiting for a release."
+  - name: META_COLD_STORE_ENABLED
+    services:
+      - aiometadata
+    default: ""
+    note: "Persists only provably-stable metadata (old films, ended series, finished anime) in a dedicated SQLite file, so Redis eviction stops forcing upstream re-fetches."
+  - name: META_COLD_STORE_MAX_BYTES
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: META_COLD_STORE_COMPRESSION
+    services:
+      - aiometadata
+    default: ""
+    note: "lz4-compress stored payloads (~50% smaller disk footprint). Safe to toggle at any time \u2014 existing entries stay readable either way."
+  - name: COLD_TTL_FROZEN
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: COLD_TTL_STABLE
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: SETTLE_MOVIE
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: SETTLE_SERIES
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: FROZEN_AGE
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: COLD_STORE_INACTIVE_DAYS
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: COLD_STORE_STATS_TTL
+    services:
+      - aiometadata
+    default: ""
+    note: "How long the dashboard reuses cold-store size figures before recounting. Each recount is a synchronous scan that blocks the event loop; 0 recounts always."
+  - name: IMAGE_WARM_QUEUE
+    services:
+      - aiometadata
+    default: ""
+    note: "Image warming runs through one bounded queue shared by every catalog, instead of an unbounded chain per catalog. Concurrency adapts to event-loop lag, so it uses whatever headroom catalog warming leaves and backs off when it does not."
+  - name: IMAGE_WARM_QUEUE_MAX
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: IMAGE_WARM_CONCURRENCY_MIN
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: IMAGE_WARM_CONCURRENCY_MAX
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+  - name: IMAGE_WARM_TARGET_LAG_MS
+    services:
+      - aiometadata
+    default: ""
+    note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
+category: media
+name: AIOMetadata
+version: "3.8.3"
+icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/aiometadata.png
+tagline: Catalogs and metadata for AIOStreams and Stremio
+description: >-
+  AIOMetadata builds the catalogs and metadata your AIOStreams setup shows:
+  trending, popular and upcoming lists, streaming service catalogs, and
+  artwork from TMDB, TVDB, Fanart.tv and more.
+
+  Open the app to configure catalogs, then add the generated manifest URL
+  to AIOStreams. A ready-made German setup is in this store's repository:
+  in the app's Setup page choose "Share a setup" and load
+  https://raw.githubusercontent.com/pstens/umbrel-custom-store/master/sparkles-aiometadata/templates/germany.json
+
+  Every server setting is listed under Settings → Environment variables.
+  Empty values use AIOMetadata's own defaults. Set TMDB_API_KEY or
+  BUILT_IN_TMDB_API_KEY before use.
+developer: cedya77
+website: https://github.com/cedya77/aiometadata
+dependencies: []
+repo: https://github.com/cedya77/aiometadata
+support: https://github.com/cedya77/aiometadata/issues
+port: 3232
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Sparkles
+submission: https://github.com/pstens/umbrel-custom-store
+releaseNotes: >-
+  First release of AIOMetadata in the Sparkles store, with every server
+  setting exposed and a German catalog template.
