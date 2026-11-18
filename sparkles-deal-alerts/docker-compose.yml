@@ -91,15 +91,24 @@ services:
         EVERY = int(E("RETOURA_INTERVAL_MIN") or 30) * 60
         # Each entry: part of a group name, @username, chat ID, or a t.me / web.telegram.org link to the group.
         GROUPS = [re.split(r"[/#]", g.strip().lower())[-1].lstrip("@") for g in E("TG_GROUPS", "").split(",") if g.strip()]
-        TOPIC = E("TG_TOPIC") or ("power tools, hand tools, machines, measuring devices, ladders, work clothing, "
-                                  "safety gear, work lights, cables or batteries")
+        # German example words per category: jev is trained on English and judged German posts poorly without them
+        # (37/40 right on a German test set, against 31/40 with the bare English list).
+        TOPIC = E("TG_TOPIC") or (
+            "power tools (Bohrhammer, Akkuschrauber, Säge, Schleifer), hand tools (Hammer, Zange, Schraubendreher), "
+            "machines (Kompressor, Rüttelplatte), measuring devices (Laser, Wasserwaage, Entfernungsmesser), "
+            "ladders (Leiter, Gerüst), work clothing (Arbeitshose, Arbeitsjacke, Sicherheitsschuhe), "
+            "safety gear (Arbeitshandschuhe, Schutzbrille, Gehörschutz), work lights (Baustrahler, Arbeitsleuchte), "
+            "cables (Kabeltrommel, Verlängerungskabel) or batteries for tools")
         # Keywords, discount and threshold are set by messaging the bot and kept here.
         STATE_FILE = "/data/state.json"
         STATE = json.load(open(STATE_FILE)) if os.path.exists(STATE_FILE) else {}
         STATE.setdefault("sent", {})
         STATE.setdefault("watch", [])
         STATE.setdefault("min_discount", 60)
-        STATE.setdefault("threshold", 0.2)
+        STATE.setdefault("threshold", 0.8)
+        if STATE.get("jev_question") != 2:
+            # The tradesman question scores higher than the first one, so an old threshold would let everything through.
+            STATE.update(jev_question=2, threshold=0.8)
         STATE.setdefault("quiet", [22, 7])
         TZ = ZoneInfo(E("TZ") or "Europe/Berlin")
         if E("CHAT_ID"):
@@ -229,7 +238,7 @@ services:
         HELP = ("/add Bohrhammer, Makita – watch words in retoura names and group posts\n"
                 "/del Makita – stop watching a word\n"
                 "/discount 60 – minimum retoura discount in percent\n"
-                "/threshold 0.2 – jev score (0–1) for group posts without a watched word\n"
+                "/threshold 0.8 – jev score (0–1) for group posts without a watched word\n"
                 "/quiet 22 7 – no sound from 22:00 to 7:00; /quiet off\n"
                 "/check – check retoura now; /check 30 checks once from 30% off\n"
                 "/list – show the settings")
@@ -271,7 +280,7 @@ services:
 
         COMMANDS = [("add", "Watch words, e.g. /add bohrhammer, säge"), ("del", "Stop watching words"),
                     ("discount", "Minimum retoura discount, e.g. /discount 40"),
-                    ("threshold", "jev score for group posts, e.g. /threshold 0.2"),
+                    ("threshold", "jev score for group posts, e.g. /threshold 0.8"),
                     ("quiet", "Silent hours, e.g. /quiet 22 7 or /quiet off"),
                     ("check", "Check retoura now, e.g. /check 30 for once from 30% off"), ("list", "Show the settings")]
 
@@ -303,15 +312,16 @@ services:
                     time.sleep(10)
 
         # ---------- telegram groups ----------
-        CATEGORIES = {c.strip(): c.strip() for c in re.split(r",| or ", TOPIC) if c.strip()}
+        # "power tools (Bohrhammer, …)" -> name "power tools", description with the examples
+        CATEGORIES = {re.sub(r"\s*\(.*?\)", "", c).strip(): c.strip() for c in re.split(r",(?![^()]*\))| or (?![^()]*\))", TOPIC) if c.strip()}
         CATEGORIES["none of these"] = "anything else, such as clothing for everyday use, household or beauty products"
 
         def classify(text):
             """jev (sibling service) reads the post once and answers both questions: P(useful) and the closest category."""
             body = {"model": "jev-latest", "state": text, "questions": {
                 "useful": {"type": "noul", "instructions":
-                    "Does this German post from a product tester group offer a concrete product that is useful "
-                    "on a construction site, such as " + TOPIC + "?"},
+                    "Would a tradesman on a construction site use the product in this German post at work? "
+                    "Examples: " + TOPIC + ". Everyday clothing, household, beauty, toys and electronics do not count."},
                 "category": {"type": "choice", "instructions": "Which kind of product does this post offer?",
                              "criteria": CATEGORIES}}}
             req = urllib.request.Request("http://jev:8017/v1/systemone", json.dumps(body).encode(),

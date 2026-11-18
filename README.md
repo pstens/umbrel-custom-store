@@ -101,14 +101,14 @@ Words, discount and threshold are set by messaging the bot, and the first chat t
 | `/add Bohrhammer, Makita` | Watch these words in retoura names and group posts. |
 | `/del Makita` | Stop watching a word. |
 | `/discount 60` | Minimum retoura discount in percent (default 60). |
-| `/threshold 0.2` | jev score (0–1) a group post without a watched word needs (default 0.2). |
+| `/threshold 0.8` | jev score (0–1) a group post without a watched word needs (default 0.8). |
 | `/quiet 22 7` | Messages between 22:00 and 7:00 (Berlin time) arrive without sound; `/quiet off` turns this off. |
 | `/check` | Check retoura now. `/check 30` checks once from 30% off without changing the saved discount. |
 | `/list` | Show the settings. |
 
 The bot shows these commands in Telegram's `/` menu. With no words, every retoura item at or above the discount counts.
 
-jev is trained on English, and on German posts its scores overlap: in a test, a Bohrhammer scored 0.31 and a Baustrahler 0.17, while a winter jacket scored 0.29 and socks 0.20 (picked as "work clothing"). Watched words are the reliable filter; jev only adds finds no word covers, with noise.
+jev is trained on English. It is asked whether a tradesman would use the product at work, with German example words for each category in `TG_TOPIC`. On a test set of 40 German deal posts this got 37 right at threshold 0.8, against 31 with a plain English category list; on the 16 posts it was not tuned on, every real find scored above every other post. Watched words remain the most reliable filter.
 
 Setup:
 

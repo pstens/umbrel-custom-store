@@ -40,7 +40,7 @@ environment:
     services:
       - alerts
     default: ""
-    note: What counts as useful, as an English list for the local jev model. Empty means power tools, hand tools, machines, measuring devices, ladders, work clothing, safety gear, work lights, cables or batteries.
+    note: What counts as useful for the local jev model, as English categories with German example words in brackets, such as "power tools (Bohrhammer, Säge), ladders (Leiter)". Empty means power tools, hand tools, machines, measuring devices, ladders, work clothing, safety gear, work lights, cables and batteries, each with German examples.
   - name: JEV_THREADS
     services:
       - jev
@@ -48,7 +48,7 @@ environment:
     note: CPU threads for the local jev model. Each post takes well under a second.
 category: utilities
 name: Deal Alerts
-version: "1.0.5"
+version: "1.0.6"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/telegram.png
 tagline: Telegram alerts for retoura tool deals and construction finds in tester groups
 description: >-
@@ -79,4 +79,4 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  /check takes an optional discount for a one-time scan, such as /check 30. Also: group posts arrive as real forwards with a note on why they matched, retoura alerts show the product photo, night messages arrive silently (/quiet), and the bot lists its commands in the / menu.
+  jev now asks whether a tradesman would use the product, with German example words per category: 37 of 40 German test posts right instead of 31. The jev threshold is reset to its new default of 0.8 once. Also: /check 30 for a one-time scan from 30% off, real forwards of group posts, product photos, silent nights (/quiet), and the / command menu.
