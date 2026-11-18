@@ -92,7 +92,7 @@ It reaches Paperless at `http://paperless_webserver_1:8000` on umbrelOS's shared
 
 ### Deal Alerts
 
-Checks the retoura category every 30 minutes, sorted by discount, and stops at the first item below the minimum discount. Items whose name contains one of your words get one Telegram message with the purchase link, and another if the price drops further. It also reads your Telegram groups as your own account. A post with a link is forwarded when it contains one of your words, or when [jev](https://github.com/feder-cr/jev) scores it at or above the threshold. jev is a small yes/no model that runs locally in the app's `jev` service (0.9B parameters, about 1 GB of RAM, x86-64 only).
+Checks the retoura category every 30 minutes, sorted by discount, and stops at the first item below the minimum discount. Items whose name contains one of your words get one Telegram message with the product photo and purchase link, and another if the price drops further. It also reads your Telegram groups as your own account. A post with a link is forwarded when it contains one of your words, or when [jev](https://github.com/feder-cr/jev) scores it at or above the threshold. jev is a small yes/no model that runs locally in the app's `jev` service (0.9B parameters, about 1 GB of RAM, x86-64 only). Your account forwards the original post into your chat with the bot, and the bot adds a note below it with the reason: the matched word, or jev's score and the category it picked from `TG_TOPIC`. Channels that block forwarding get a copy of the text and photo instead.
 
 Words, discount and threshold are set by messaging the bot, and the first chat that writes to it owns it:
 
@@ -102,10 +102,13 @@ Words, discount and threshold are set by messaging the bot, and the first chat t
 | `/del Makita` | Stop watching a word. |
 | `/discount 60` | Minimum retoura discount in percent (default 60). |
 | `/threshold 0.2` | jev score (0–1) a group post without a watched word needs (default 0.2). |
+| `/quiet 22 7` | Messages between 22:00 and 7:00 (Berlin time) arrive without sound; `/quiet off` turns this off. |
 | `/check` | Check retoura now. |
 | `/list` | Show the settings. |
 
-With no words, every retoura item at or above the discount counts. On German posts jev scores tools low but still above unrelated products: in a test, tools scored 0.24–0.85 and non-tools at most 0.17, so the default threshold is 0.2.
+The bot shows these commands in Telegram's `/` menu. With no words, every retoura item at or above the discount counts.
+
+jev is trained on English, and on German posts its scores overlap: in a test, a Bohrhammer scored 0.31 and a Baustrahler 0.17, while a winter jacket scored 0.29 and socks 0.20 (picked as "work clothing"). Watched words are the reliable filter; jev only adds finds no word covers, with noise.
 
 Setup:
 

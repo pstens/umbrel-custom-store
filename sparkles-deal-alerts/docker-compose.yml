@@ -75,14 +75,15 @@ services:
 
         sys.path.insert(0, "/data/py")
         try:
-            import telethon
+            import telethon, tzdata
         except ImportError:
             # ponytail: installed once into the data volume; delete /data/py to upgrade.
             subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--no-cache-dir",
-                                   "--target", "/data/py", "telethon<2"])
+                                   "--target", "/data/py", "telethon<2", "tzdata"])
             importlib.invalidate_caches()
             import telethon
         from telethon import TelegramClient, events, errors
+        from zoneinfo import ZoneInfo
 
         E = os.environ.get
         BOT = E("BOT_TOKEN", "")
@@ -99,6 +100,8 @@ services:
         STATE.setdefault("watch", [])
         STATE.setdefault("min_discount", 60)
         STATE.setdefault("threshold", 0.2)
+        STATE.setdefault("quiet", [22, 7])
+        TZ = ZoneInfo(E("TZ") or "Europe/Berlin")
         if E("CHAT_ID"):
             STATE["chat_id"] = int(E("CHAT_ID"))
         LOCK = threading.RLock()
@@ -117,19 +120,46 @@ services:
                     json.dump(STATE, f)
                 os.replace(STATE_FILE + ".tmp", STATE_FILE)
 
-        def bot(method, **params):
-            req = urllib.request.Request("https://api.telegram.org/bot%s/%s" % (BOT, method),
-                                         json.dumps(params).encode(), {"Content-Type": "application/json"})
+        def bot(method, upload=None, **params):
+            url = "https://api.telegram.org/bot%s/%s" % (BOT, method)
+            if upload is None:
+                req = urllib.request.Request(url, json.dumps(params).encode(), {"Content-Type": "application/json"})
+            else:
+                # upload = (field, jpeg bytes), sent as multipart/form-data
+                b = "dealalerts%d" % time.time_ns()
+                parts = ['--%s\r\nContent-Disposition: form-data; name="%s"\r\n\r\n%s\r\n' % (b, k, v) for k, v in params.items()]
+                body = ("".join(parts) + '--%s\r\nContent-Disposition: form-data; name="%s"; filename="photo.jpg"\r\n'
+                        "Content-Type: image/jpeg\r\n\r\n" % (b, upload[0])).encode() + upload[1] + ("\r\n--%s--\r\n" % b).encode()
+                req = urllib.request.Request(url, body, {"Content-Type": "multipart/form-data; boundary=" + b})
             with urllib.request.urlopen(req, timeout=70) as r:
                 return json.load(r)["result"]
 
-        def notify(text):
+        def quiet_now():
+            if not STATE["quiet"]:
+                return False
+            start, end = STATE["quiet"]
+            h = datetime.datetime.now(TZ).hour
+            return start <= h or h < end if start > end else start <= h < end
+
+        def notify(text, photo=None):
+            """photo: an image URL or JPEG bytes. Falls back to a text message if the photo is refused."""
             if not BOT:
                 return log("BOT_TOKEN is not set, would send: " + text)
             cid = STATE.get("chat_id")
             if not cid:
                 return log("no chat yet: send /start to your bot")
-            bot("sendMessage", chat_id=cid, text=text, parse_mode="HTML")
+            common = {"chat_id": cid, "parse_mode": "HTML", "disable_notification": quiet_now()}
+            # Telegram captions stop at 1024 characters; longer texts go without a photo.
+            if photo and len(text) <= 1024:
+                try:
+                    if isinstance(photo, bytes):
+                        bot("sendPhoto", upload=("photo", photo), caption=text, **{k: str(v).lower() if isinstance(v, bool) else v for k, v in common.items()})
+                    else:
+                        bot("sendPhoto", photo=photo, caption=text, **common)
+                    return True
+                except Exception as e:
+                    log("photo refused, sending text: %r" % e)
+            bot("sendMessage", text=text, **common)
             return True
 
         # ---------- retoura ----------
@@ -141,7 +171,9 @@ services:
                     continue
                 disc = re.search(r'class="ov-t[^"]*">- (\d+)%', card)
                 old = re.search(r'old-price-value">([^<]+)<', card)
+                img = re.search(r'<img\s+src="([^"]+)"', card)
                 yield {"url": m[1], "name": html.unescape(m[2]).strip(), "grade": (m[3] or "").strip(),
+                       "img": img[1].replace("/sm/", "/md/") if img else None,
                        "price": float(price[1]), "old": old[1].strip() if old else "",
                        "discount": int(disc[1]) if disc else 0}
 
@@ -171,7 +203,7 @@ services:
                     # Mark a deal only once Telegram has it, so a failed send is retried next time.
                     if not notify("🛒 <b>%s</b> %s\n<b>%.2f €</b> statt %s (−%d%%)\n%s" % (
                         html.escape(it["name"]), html.escape(it["grade"]), it["price"],
-                        html.escape(it["old"]), it["discount"], html.escape(it["url"]))):
+                        html.escape(it["old"]), it["discount"], html.escape(it["url"])), it["img"]):
                         continue
                     with LOCK:
                         STATE["sent"][it["url"]] = it["price"]
@@ -196,13 +228,15 @@ services:
                 "/del Makita – stop watching a word\n"
                 "/discount 60 – minimum retoura discount in percent\n"
                 "/threshold 0.2 – jev score (0–1) for group posts without a watched word\n"
+                "/quiet 22 7 – no sound from 22:00 to 7:00; /quiet off\n"
                 "/check – check retoura now\n"
                 "/list – show the settings")
 
         def settings():
-            return "Words: %s\nRetoura: from %d%% off, every %d min\nGroups: a watched word or jev ≥ %.2f" % (
+            return "Words: %s\nRetoura: from %d%% off, every %d min\nGroups: a watched word or jev ≥ %.2f\nSilent: %s" % (
                 ", ".join(STATE["watch"]) or "none, so every retoura item counts",
-                STATE["min_discount"], EVERY // 60, STATE["threshold"])
+                STATE["min_discount"], EVERY // 60, STATE["threshold"],
+                "%02d:00–%02d:00" % tuple(STATE["quiet"]) if STATE["quiet"] else "never")
 
         def command(text):
             cmd, _, arg = text.strip().partition(" ")
@@ -217,6 +251,11 @@ services:
                     STATE["min_discount"] = int(arg)
                 elif cmd == "/threshold" and re.fullmatch(r"0?\.\d+|0|1", arg.strip()):
                     STATE["threshold"] = float(arg)
+                elif cmd == "/quiet" and (arg.strip() == "off" or re.fullmatch(r"\d{1,2} \d{1,2}", arg.strip())):
+                    hours = [int(h) for h in arg.split()] if arg.strip() != "off" else []
+                    if any(h > 23 for h in hours):
+                        return HELP
+                    STATE["quiet"] = hours
                 elif cmd == "/check":
                     threading.Thread(target=lambda: notify(check_retoura()), daemon=True).start()
                     return "Checking retoura…"
@@ -227,8 +266,19 @@ services:
                 save()
             return "OK.\n" + settings()
 
+        COMMANDS = [("add", "Watch words, e.g. /add bohrhammer, säge"), ("del", "Stop watching words"),
+                    ("discount", "Minimum retoura discount, e.g. /discount 40"),
+                    ("threshold", "jev score for group posts, e.g. /threshold 0.2"),
+                    ("quiet", "Silent hours, e.g. /quiet 22 7 or /quiet off"),
+                    ("check", "Check retoura now"), ("list", "Show the settings")]
+
         def bot_loop():
             offset = None
+            try:
+                # Shows the commands in Telegram's / menu.
+                bot("setMyCommands", commands=[{"command": c, "description": d} for c, d in COMMANDS])
+            except Exception as e:
+                log("bot: could not set the command menu: %r" % e)
             while True:
                 try:
                     for u in bot("getUpdates", offset=offset, timeout=50, allowed_updates=["message"]):
@@ -241,7 +291,7 @@ services:
                                 STATE["chat_id"] = cid
                                 save()
                                 log("bot: alerts go to chat %s" % cid)
-                        if cid == STATE["chat_id"] and m.get("text"):
+                        if cid == STATE["chat_id"] and m.get("text") and not m.get("forward_origin"):
                             # One command per line, so several can go in one message.
                             replies = [command(l) for l in m["text"].splitlines() if l.strip()]
                             bot("sendMessage", chat_id=cid, text=replies[-1] if replies else HELP)
@@ -250,15 +300,37 @@ services:
                     time.sleep(10)
 
         # ---------- telegram groups ----------
+        CATEGORIES = {c.strip(): c.strip() for c in re.split(r",| or ", TOPIC) if c.strip()}
+        CATEGORIES["none of these"] = "anything else, such as clothing for everyday use, household or beauty products"
+
         def classify(text):
-            # jev (sibling service) answers a yes/no question with P(yes).
-            body = {"model": "jev-latest", "state": text, "questions": {"useful": {"type": "noul", "instructions":
+            """jev (sibling service) reads the post once and answers both questions: P(useful) and the closest category."""
+            body = {"model": "jev-latest", "state": text, "questions": {
+                "useful": {"type": "noul", "instructions":
                     "Does this German post from a product tester group offer a concrete product that is useful "
-                    "on a construction site, such as " + TOPIC + "?"}}}
+                    "on a construction site, such as " + TOPIC + "?"},
+                "category": {"type": "choice", "instructions": "Which kind of product does this post offer?",
+                             "criteria": CATEGORIES}}}
             req = urllib.request.Request("http://jev:8017/v1/systemone", json.dumps(body).encode(),
                                          {"Content-Type": "application/json"})
             with urllib.request.urlopen(req, timeout=60) as r:
-                return json.load(r)["answers"]["useful"]["noul"]
+                a = json.load(r)["answers"]
+            return a["useful"]["noul"], a["category"]["choice"]
+
+        BOT_USER = {}
+
+        async def forward(msg):
+            """Forward the original post from your account into your chat with the bot, if that chat is yours."""
+            try:
+                if not BOT_USER:
+                    BOT_USER.update(bot("getMe"), me=(await TG.get_me()).id)
+                if BOT_USER["me"] != STATE.get("chat_id"):
+                    return False
+                await TG.forward_messages(BOT_USER["username"], msg)
+                return True
+            except Exception as e:
+                log("forward failed, copying instead: %r" % e)
+                return False
 
         async def on_message(ev):
             if ev.is_private:
@@ -280,17 +352,25 @@ services:
             why = next((w for w in STATE["watch"] if w in msg.message.lower()), None)
             if not why:
                 try:
-                    p = await asyncio.to_thread(classify, msg.message)
+                    p, kind = await asyncio.to_thread(classify, msg.message)
                 except Exception as e:
                     return log("jev error: %r" % e)
                 if p < STATE["threshold"]:
                     return
-                why = "jev %.2f" % p
+                why = "jev %.2f · %s" % (p, kind)
             src = "https://t.me/%s/%d" % (chat.username, msg.id) if getattr(chat, "username", None) else "https://t.me/c/%d/%d" % (chat.id, msg.id)
             log("tg: %s — %s — %s" % (title, why, msg.message[:80].replace("\n", " ")))
-            await asyncio.to_thread(notify, "🔧 <b>%s</b> (%s)\n%s\n\n%s\n\n<a href=\"%s\">Beitrag</a>" % (
-                html.escape(title), html.escape(why), html.escape(msg.message[:400]),
-                "\n".join(html.escape(l) for l in links[:5]), src))
+            meta = "🔧 <b>%s</b> (%s)\n<a href=\"%s\">Beitrag</a>" % (html.escape(title), html.escape(why), src)
+            if await forward(msg):
+                # Own forwards make no sound, so the bot's note right below it is what notifies.
+                return await asyncio.to_thread(notify, "↑ " + meta)
+            # Forwarding failed (e.g. the channel protects its content): copy text and photo instead.
+            try:
+                photo = await msg.download_media(file=bytes) if msg.photo else None
+            except Exception as e:
+                photo = log("photo download failed: %r" % e)
+            await asyncio.to_thread(notify, "%s\n\n%s\n\n%s" % (meta, html.escape(msg.message[:300]),
+                "\n".join(html.escape(l[:150]) for l in links[:3])), photo)
 
         def run(coro):
             return asyncio.run_coroutine_threadsafe(coro, LOOP).result(120)
