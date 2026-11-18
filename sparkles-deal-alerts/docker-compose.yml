@@ -94,7 +94,7 @@ services:
         # Keywords, discount and threshold are set by messaging the bot and kept here.
         STATE_FILE = "/data/state.json"
         STATE = json.load(open(STATE_FILE)) if os.path.exists(STATE_FILE) else {}
-        STATE.setdefault("retoura", {})
+        STATE.setdefault("sent", {})
         STATE.setdefault("watch", [])
         STATE.setdefault("min_discount", 60)
         STATE.setdefault("threshold", 0.2)
@@ -129,6 +129,7 @@ services:
             if not cid:
                 return log("no chat yet: send /start to your bot")
             bot("sendMessage", chat_id=cid, text=text, parse_mode="HTML")
+            return True
 
         # ---------- retoura ----------
         def parse(page):
@@ -150,6 +151,8 @@ services:
                 return r.read().decode("utf-8", "replace")
 
         def check_retoura():
+            if not (BOT and STATE.get("chat_id")):
+                return log("retoura: waiting for BOT_TOKEN and /start")
             hits, watch, min_disc = 0, list(STATE["watch"]), STATE["min_discount"]
             # Sortierung=99 lists the highest discount first, so stop at the first item below the threshold.
             for n in range(1, 50):
@@ -161,16 +164,18 @@ services:
                         return msg
                     if watch and not any(w in it["name"].lower() for w in watch):
                         continue
-                    seen = STATE["retoura"].get(it["url"])
+                    seen = STATE["sent"].get(it["url"])
                     if seen is not None and seen <= it["price"]:
                         continue
+                    # Mark a deal only once Telegram has it, so a failed send is retried next time.
+                    if not notify("🛒 <b>%s</b> %s\n<b>%.2f €</b> statt %s (−%d%%)\n%s" % (
+                        html.escape(it["name"]), html.escape(it["grade"]), it["price"],
+                        html.escape(it["old"]), it["discount"], html.escape(it["url"]))):
+                        continue
                     with LOCK:
-                        STATE["retoura"][it["url"]] = it["price"]
+                        STATE["sent"][it["url"]] = it["price"]
                         save()
                     hits += 1
-                    notify("🛒 <b>%s</b> %s\n<b>%.2f €</b> statt %s (−%d%%)\n%s" % (
-                        html.escape(it["name"]), html.escape(it["grade"]), it["price"],
-                        html.escape(it["old"]), it["discount"], html.escape(it["url"])))
                 if len(items) < 20:
                     break
             msg = "retoura: %d new deal(s), reached the last page" % hits
