@@ -241,7 +241,9 @@ services:
                                 save()
                                 log("bot: alerts go to chat %s" % cid)
                         if cid == STATE["chat_id"] and m.get("text"):
-                            bot("sendMessage", chat_id=cid, text=command(m["text"]))
+                            # One command per line, so several can go in one message.
+                            replies = [command(l) for l in m["text"].splitlines() if l.strip()]
+                            bot("sendMessage", chat_id=cid, text=replies[-1] if replies else HELP)
                 except Exception as e:
                     log("bot error: %r" % e)
                     time.sleep(10)
