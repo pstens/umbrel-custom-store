@@ -1,0 +1,367 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sparkles-deal-alerts_alerts_1
+      APP_PORT: 8080
+
+  # Local yes/no model that judges Telegram posts (github.com/feder-cr/jev, MIT, ~1 GB RAM, CPU only).
+  jev:
+    image: docker.io/library/python:3.13-slim@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+    platform: linux/amd64
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      JEV_THREADS: ${JEV_THREADS:-2}
+    command:
+      - python
+      - -u
+      - -c
+      - |
+        import hashlib, os, tarfile, urllib.request, zipfile
+
+        RELEASE = "https://github.com/feder-cr/jev/releases/download/jevos-v5/"
+        FILES = {"jev-linux-x64.tar.gz": "1ce77566405514ed2f20d64f8222cf9eba9b714d332f05f6296e0cad84dd7b04",
+                 "jevos-v5-openvino-int8.zip": "0a1159c31b9c2abc484af9c866cdcfe5279fdf592b368636625c5a795f970acc"}
+        D = "/data/jev"
+        if not os.path.exists(D + "/jevos-v5.ready"):
+            os.makedirs(D, exist_ok=True)
+            for name, sha in FILES.items():
+                path = D + "/" + name
+                print("downloading " + name)
+                urllib.request.urlretrieve(RELEASE + name, path)
+                h = hashlib.sha256()
+                with open(path, "rb") as f:
+                    for chunk in iter(lambda: f.read(1 << 20), b""):
+                        h.update(chunk)
+                if h.hexdigest() != sha:
+                    raise SystemExit("checksum mismatch for " + name)
+                if name.endswith(".zip"):
+                    zipfile.ZipFile(path).extractall(D)
+                else:
+                    tarfile.open(path).extractall(D, filter="data")
+                os.remove(path)
+            open(D + "/jevos-v5.ready", "w").close()
+        os.execv(D + "/jev/jev", [D + "/jev/jev", "serve", "--host", "0.0.0.0", "--port", "8017",
+                                  "--model-dir", D + "/model", "--threads", os.environ.get("JEV_THREADS") or "2"])
+
+  alerts:
+    image: docker.io/library/python:3.13-alpine@sha256:9ef1a599f863231c3d91e941389bfdc4a2d6070557243d54df1a4e57015b960e
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      HOME: /data
+      BOT_TOKEN: ${BOT_TOKEN:-}
+      CHAT_ID: ${CHAT_ID:-}
+      RETOURA_URL: ${RETOURA_URL:-https://shop.retoura.de/Maschinen-Geraete}
+      RETOURA_INTERVAL_MIN: ${RETOURA_INTERVAL_MIN:-30}
+      TG_API_ID: ${TG_API_ID:-}
+      TG_API_HASH: ${TG_API_HASH:-}
+      TG_GROUPS: ${TG_GROUPS:-}
+      TG_TOPIC: ${TG_TOPIC:-}
+    # The script lives here rather than in a file because umbrelOS does not
+    # copy plain files into the app data directory on app updates.
+    command:
+      - python
+      - -u
+      - -c
+      - |
+        import asyncio, datetime, html, http.server, importlib, json, os, re, subprocess, sys, threading, time, urllib.parse, urllib.request
+
+        sys.path.insert(0, "/data/py")
+        try:
+            import telethon
+        except ImportError:
+            # ponytail: installed once into the data volume; delete /data/py to upgrade.
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--no-cache-dir",
+                                   "--target", "/data/py", "telethon<2"])
+            importlib.invalidate_caches()
+            import telethon
+        from telethon import TelegramClient, events, errors
+
+        E = os.environ.get
+        BOT = E("BOT_TOKEN", "")
+        SHOP = E("RETOURA_URL", "").rstrip("/")
+        EVERY = int(E("RETOURA_INTERVAL_MIN") or 30) * 60
+        GROUPS = [g.strip().lower() for g in E("TG_GROUPS", "").split(",") if g.strip()]
+        TOPIC = E("TG_TOPIC") or ("power tools, hand tools, machines, measuring devices, ladders, work clothing, "
+                                  "safety gear, work lights, cables or batteries")
+        # Keywords, discount and threshold are set by messaging the bot and kept here.
+        STATE_FILE = "/data/state.json"
+        STATE = json.load(open(STATE_FILE)) if os.path.exists(STATE_FILE) else {}
+        STATE.setdefault("retoura", {})
+        STATE.setdefault("watch", [])
+        STATE.setdefault("min_discount", 60)
+        STATE.setdefault("threshold", 0.2)
+        if E("CHAT_ID"):
+            STATE["chat_id"] = int(E("CHAT_ID"))
+        LOCK = threading.RLock()
+        LOG, LOGIN, LOOP = [], {}, None
+        TG = TelegramClient("/data/telegram", int(E("TG_API_ID")), E("TG_API_HASH")) if E("TG_API_ID") and E("TG_API_HASH") else None
+
+        def log(msg):
+            line = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M UTC  ") + msg
+            print(line)
+            LOG.append(line)
+            del LOG[:-300]
+
+        def save():
+            with LOCK:
+                with open(STATE_FILE + ".tmp", "w") as f:
+                    json.dump(STATE, f)
+                os.replace(STATE_FILE + ".tmp", STATE_FILE)
+
+        def bot(method, **params):
+            req = urllib.request.Request("https://api.telegram.org/bot%s/%s" % (BOT, method),
+                                         json.dumps(params).encode(), {"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=70) as r:
+                return json.load(r)["result"]
+
+        def notify(text):
+            if not BOT:
+                return log("BOT_TOKEN is not set, would send: " + text)
+            cid = STATE.get("chat_id")
+            if not cid:
+                return log("no chat yet: send /start to your bot")
+            bot("sendMessage", chat_id=cid, text=text, parse_mode="HTML")
+
+        # ---------- retoura ----------
+        def parse(page):
+            for card in page.split('class="p-w col-12"')[1:]:
+                m = re.search(r'href="([^"]+)" class="title[^"]*"><span\s+class="ret-article-name">([^<]*)</span>(?:<span>([^<]*)</span>)?', card)
+                price = re.search(r'itemprop="price" content="([\d.]+)"', card)
+                if not (m and price):
+                    continue
+                disc = re.search(r'class="ov-t[^"]*">- (\d+)%', card)
+                old = re.search(r'old-price-value">([^<]+)<', card)
+                yield {"url": m[1], "name": html.unescape(m[2]).strip(), "grade": (m[3] or "").strip(),
+                       "price": float(price[1]), "old": old[1].strip() if old else "",
+                       "discount": int(disc[1]) if disc else 0}
+
+        def fetch(n):
+            url = SHOP + ("" if n == 1 else "_s%d" % n) + "?Sortierung=99"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return r.read().decode("utf-8", "replace")
+
+        def check_retoura():
+            hits, watch, min_disc = 0, list(STATE["watch"]), STATE["min_discount"]
+            # Sortierung=99 lists the highest discount first, so stop at the first item below the threshold.
+            for n in range(1, 50):
+                items = list(parse(fetch(n)))
+                for it in items:
+                    if it["discount"] < min_disc:
+                        msg = "retoura: %d new deal(s), scanned %d page(s)" % (hits, n)
+                        log(msg)
+                        return msg
+                    if watch and not any(w in it["name"].lower() for w in watch):
+                        continue
+                    seen = STATE["retoura"].get(it["url"])
+                    if seen is not None and seen <= it["price"]:
+                        continue
+                    with LOCK:
+                        STATE["retoura"][it["url"]] = it["price"]
+                        save()
+                    hits += 1
+                    notify("🛒 <b>%s</b> %s\n<b>%.2f €</b> statt %s (−%d%%)\n%s" % (
+                        html.escape(it["name"]), html.escape(it["grade"]), it["price"],
+                        html.escape(it["old"]), it["discount"], html.escape(it["url"])))
+                if len(items) < 20:
+                    break
+            msg = "retoura: %d new deal(s), reached the last page" % hits
+            log(msg)
+            return msg
+
+        async def retoura_loop():
+            while True:
+                try:
+                    await asyncio.to_thread(check_retoura)
+                except Exception as e:
+                    log("retoura error: %r" % e)
+                await asyncio.sleep(EVERY)
+
+        # ---------- bot commands ----------
+        HELP = ("/add Bohrhammer, Makita – watch words in retoura names and group posts\n"
+                "/del Makita – stop watching a word\n"
+                "/discount 60 – minimum retoura discount in percent\n"
+                "/threshold 0.2 – jev score (0–1) for group posts without a watched word\n"
+                "/check – check retoura now\n"
+                "/list – show the settings")
+
+        def settings():
+            return "Words: %s\nRetoura: from %d%% off, every %d min\nGroups: a watched word or jev ≥ %.2f" % (
+                ", ".join(STATE["watch"]) or "none, so every retoura item counts",
+                STATE["min_discount"], EVERY // 60, STATE["threshold"])
+
+        def command(text):
+            cmd, _, arg = text.strip().partition(" ")
+            cmd = cmd.split("@")[0].lower()
+            words = [w.strip().lower() for w in arg.split(",") if w.strip()]
+            with LOCK:
+                if cmd == "/add" and words:
+                    STATE["watch"] += [w for w in words if w not in STATE["watch"]]
+                elif cmd == "/del" and words:
+                    STATE["watch"] = [w for w in STATE["watch"] if w not in words]
+                elif cmd == "/discount" and arg.strip().isdigit() and int(arg) <= 100:
+                    STATE["min_discount"] = int(arg)
+                elif cmd == "/threshold" and re.fullmatch(r"0?\.\d+|0|1", arg.strip()):
+                    STATE["threshold"] = float(arg)
+                elif cmd == "/check":
+                    threading.Thread(target=lambda: notify(check_retoura()), daemon=True).start()
+                    return "Checking retoura…"
+                elif cmd == "/list":
+                    return settings()
+                else:
+                    return HELP + "\n\n" + settings()
+                save()
+            return "OK.\n" + settings()
+
+        def bot_loop():
+            offset = None
+            while True:
+                try:
+                    for u in bot("getUpdates", offset=offset, timeout=50, allowed_updates=["message"]):
+                        offset = u["update_id"] + 1
+                        m = u.get("message") or {}
+                        cid = m.get("chat", {}).get("id")
+                        # The first chat that writes to the bot owns it; everyone else is ignored.
+                        with LOCK:
+                            if not STATE.get("chat_id") and cid:
+                                STATE["chat_id"] = cid
+                                save()
+                                log("bot: alerts go to chat %s" % cid)
+                        if cid == STATE["chat_id"] and m.get("text"):
+                            bot("sendMessage", chat_id=cid, text=command(m["text"]))
+                except Exception as e:
+                    log("bot error: %r" % e)
+                    time.sleep(10)
+
+        # ---------- telegram groups ----------
+        def classify(text):
+            # jev (sibling service) answers a yes/no question with P(yes).
+            body = {"model": "jev-latest", "state": text, "questions": {"useful": {"type": "noul", "instructions":
+                    "Does this German post from a product tester group offer a concrete product that is useful "
+                    "on a construction site, such as " + TOPIC + "?"}}}
+            req = urllib.request.Request("http://jev:8017/v1/systemone", json.dumps(body).encode(),
+                                         {"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.load(r)["answers"]["useful"]["noul"]
+
+        async def on_message(ev):
+            if ev.is_private:
+                return
+            chat = await ev.get_chat()
+            title = getattr(chat, "title", "") or ""
+            if GROUPS and not any(g in title.lower() for g in GROUPS):
+                return
+            msg = ev.message
+            links = re.findall(r"https?://\S+", msg.message or "")
+            links += [e.url for e in (msg.entities or []) if getattr(e, "url", None)]
+            links += [b.url for row in (msg.buttons or []) for b in row if getattr(b, "url", None)]
+            links = list(dict.fromkeys(links))
+            # Only posts with a link can be bought from.
+            if not links or not msg.message:
+                return
+            # A watched word is enough; jev judges the rest.
+            why = next((w for w in STATE["watch"] if w in msg.message.lower()), None)
+            if not why:
+                try:
+                    p = await asyncio.to_thread(classify, msg.message)
+                except Exception as e:
+                    return log("jev error: %r" % e)
+                if p < STATE["threshold"]:
+                    return
+                why = "jev %.2f" % p
+            src = "https://t.me/%s/%d" % (chat.username, msg.id) if getattr(chat, "username", None) else "https://t.me/c/%d/%d" % (chat.id, msg.id)
+            log("tg: %s — %s — %s" % (title, why, msg.message[:80].replace("\n", " ")))
+            await asyncio.to_thread(notify, "🔧 <b>%s</b> (%s)\n%s\n\n%s\n\n<a href=\"%s\">Beitrag</a>" % (
+                html.escape(title), html.escape(why), html.escape(msg.message[:400]),
+                "\n".join(html.escape(l) for l in links[:5]), src))
+
+        def run(coro):
+            return asyncio.run_coroutine_threadsafe(coro, LOOP).result(120)
+
+        async def tg_start():
+            await TG.connect()
+            if await TG.is_user_authorized():
+                me = await TG.get_me()
+                log("telegram: listening as %s" % (me.username or me.first_name))
+            else:
+                log("telegram: not logged in, open the app page to log in")
+
+        # ---------- web page ----------
+        FORM = "<form method=post action=/%s><input name=%s %s required> <button>%s</button></form>"
+
+        class Page(http.server.BaseHTTPRequestHandler):
+            def reply(self, body, code=200):
+                self.send_response(code)
+                if code == 303:
+                    self.send_header("Location", "/")
+                else:
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.end_headers()
+                if body:
+                    self.wfile.write(body.encode())
+
+            def do_GET(self):
+                if self.path == "/run":
+                    threading.Thread(target=check_retoura).start()
+                    return self.reply("", 303)
+                if not TG:
+                    tg = "Telegram groups: off (set TG_API_ID and TG_API_HASH)."
+                elif run(TG.is_user_authorized()):
+                    tg = "Telegram groups: logged in."
+                elif "hash" not in LOGIN:
+                    tg = "Telegram login, step 1 of 2:" + FORM % ("phone", "phone", "placeholder='+49…'", "Send code")
+                elif LOGIN.get("password"):
+                    tg = "Two-step password:" + FORM % ("password", "password", "type=password", "Log in")
+                else:
+                    tg = "Code from your Telegram app:" + FORM % ("code", "code", "inputmode=numeric", "Log in")
+                lines = "\n".join(html.escape(l) for l in reversed(LOG)) or "Nothing yet."
+                self.reply("<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"
+                           "<title>Deal Alerts</title><body style='font-family:system-ui;margin:16px'><h1>Deal Alerts</h1>"
+                           "<pre>%s</pre><p>Change these by messaging the bot. <a href=/run>Check retoura now</a></p><p>%s</p>"
+                           "<pre style='white-space:pre-wrap'>%s</pre>" % (html.escape(settings()), tg, lines))
+
+            def do_POST(self):
+                form = urllib.parse.parse_qs(self.rfile.read(int(self.headers["Content-Length"])).decode())
+                val = form.get(self.path.strip("/"), [""])[0].strip()
+                try:
+                    if self.path == "/phone":
+                        LOGIN.clear()
+                        LOGIN.update(phone=val, hash=run(TG.send_code_request(val)).phone_code_hash)
+                    elif self.path == "/code":
+                        try:
+                            run(TG.sign_in(LOGIN["phone"], val, phone_code_hash=LOGIN["hash"]))
+                        except errors.SessionPasswordNeededError:
+                            LOGIN["password"] = True
+                    elif self.path == "/password":
+                        run(TG.sign_in(password=val))
+                    if run(TG.is_user_authorized()):
+                        LOGIN.clear()
+                        log("telegram: logged in")
+                except Exception as e:
+                    LOGIN.clear()
+                    log("telegram login failed: %r" % e)
+                self.reply("", 303)
+
+            def log_message(self, *args):
+                pass
+
+        async def main():
+            global LOOP
+            LOOP = asyncio.get_running_loop()
+            threading.Thread(target=http.server.ThreadingHTTPServer(("", 8080), Page).serve_forever, daemon=True).start()
+            if BOT:
+                threading.Thread(target=bot_loop, daemon=True).start()
+            if TG:
+                TG.add_event_handler(on_message, events.NewMessage(incoming=True))
+                await tg_start()
+            await retoura_loop()
+
+        asyncio.run(main())

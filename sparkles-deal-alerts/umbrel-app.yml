@@ -1,0 +1,82 @@
+manifestVersion: "2.0"
+id: sparkles-deal-alerts
+environment:
+  - name: BOT_TOKEN
+    services:
+      - alerts
+    default: ""
+    note: Token of the Telegram bot that sends you the alerts, from @BotFather. Send /start to the bot afterwards; it then lists its commands for keywords, discount and threshold.
+  - name: CHAT_ID
+    services:
+      - alerts
+    default: ""
+    note: Optional. Telegram chat that gets the alerts and may change the settings. Leave empty and the first chat that messages the bot becomes its owner; the bot ignores everyone else.
+  - name: RETOURA_INTERVAL_MIN
+    services:
+      - alerts
+    default: "30"
+    note: Minutes between two retoura checks.
+  - name: RETOURA_URL
+    services:
+      - alerts
+    default: "https://shop.retoura.de/Maschinen-Geraete"
+    note: Retoura category to watch, without query string.
+  - name: TG_API_ID
+    services:
+      - alerts
+    default: ""
+    note: From my.telegram.org → API development tools. Needed to read your product-tester groups as your own account. Log in on the app page afterwards.
+  - name: TG_API_HASH
+    services:
+      - alerts
+    default: ""
+    note: From my.telegram.org, next to the api_id.
+  - name: TG_GROUPS
+    services:
+      - alerts
+    default: ""
+    note: Comma-separated parts of group names to watch, such as "Produkttester, Tester". Empty means every group and channel you are in.
+  - name: TG_TOPIC
+    services:
+      - alerts
+    default: ""
+    note: What counts as useful, as an English list for the local jev model. Empty means power tools, hand tools, machines, measuring devices, ladders, work clothing, safety gear, work lights, cables or batteries.
+  - name: JEV_THREADS
+    services:
+      - jev
+    default: "2"
+    note: CPU threads for the local jev model. Each post takes well under a second.
+category: utilities
+name: Deal Alerts
+version: "1.0.0"
+icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/telegram.png
+tagline: Telegram alerts for retoura tool deals and construction finds in tester groups
+description: >-
+  Watches the retoura Maschinen & Geräte category, sorted by discount, and
+  sends a Telegram message with the purchase link when an item matching one
+  of your words reaches your minimum discount or drops in price. You add
+  words and change the discount by messaging the bot.
+
+  It also reads your Telegram product-tester groups as your own account. A
+  post with a link that contains one of your words is forwarded. A small
+  local model (jev, about 700 MB download and 1 GB RAM, nothing leaves the
+  device) judges the other posts with a link, and posts with something
+  useful for a construction site are forwarded with the links and a link to
+  the post. Needs an x86-64 device, such as Umbrel Home.
+
+  The app page shows the log, a button to check retoura now, and the
+  one-time Telegram login.
+developer: Sparkles
+website: https://github.com/pstens/umbrel-custom-store
+dependencies: []
+repo: https://github.com/pstens/umbrel-custom-store
+support: https://github.com/pstens/umbrel-custom-store/issues
+port: 4003
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Sparkles
+submission: https://github.com/pstens/umbrel-custom-store
+releaseNotes: >-
+  First release.

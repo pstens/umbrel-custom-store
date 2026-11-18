@@ -4,6 +4,8 @@ This store contains custom umbrelOS packages:
 
 - **AIOStreams** (`sparkles-aiostreams`) — combines Stremio addons, debrid services, and Usenet sources into one configurable stream.
 - **AIOMetadata** (`sparkles-aiometadata`) — catalogs and metadata for AIOStreams, with a German catalog template.
+- **Paperless Sweeper** (`sparkles-paperless-sweeper`) — every night, shares the correspondents, tags, document types and storage paths that Paperless-ngx users create with the household group.
+- **Deal Alerts** (`sparkles-deal-alerts`) — Telegram alerts for retoura tool deals and for construction finds in your product-tester groups.
 - **Caddy** (`sparkles-caddy`) — reverse proxy that sits in front of AIOStreams and serves it over HTTPS with a publicly trusted Let's Encrypt certificate.
 
 ### Add the store
@@ -75,6 +77,43 @@ https://raw.githubusercontent.com/pstens/umbrel-custom-store/master/sparkles-aio
 then preview and apply. The template disables the built-in catalogs, which removes the long genre lists in UHF. Add the manifest URL to AIOStreams afterwards, or refresh it there. The Setup page does not carry the metadata language, so set **German** as the language on the configure page yourself.
 
 The streaming catalogs use TMDB's German watch-provider IDs. If a row stays empty, pick that service in the Setup page's streaming picker with region **Germany** instead. The picker looks the IDs up live.
+
+### Paperless Sweeper
+
+Paperless-ngx makes every correspondent, tag, document type and storage path the AI or a user creates private to that user, so other users can't see it and the AI creates duplicates for them. The sweeper removes the owner from those objects and gives the household group view and change permissions. It runs once at start and then every night. The app page lists the latest sweeps and has a **Run now** link.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PAPERLESS_TOKEN` | empty | API token of a Paperless superuser, such as `admin`. |
+| `HOUSEHOLD_GROUP` | `Haushalt` | Paperless group that gets view and change permissions. |
+| `SWEEP_HOUR_UTC` | `2` | Hour of the nightly sweep in UTC, at minute 30. |
+
+It reaches Paperless at `http://paperless_webserver_1:8000` on umbrelOS's shared Docker network. If two users each own an object with the same name, that object fails with a name clash and is listed under FAILED. Merge the two by hand.
+
+### Deal Alerts
+
+Checks the retoura category every 30 minutes, sorted by discount, and stops at the first item below the minimum discount. Items whose name contains one of your words get one Telegram message with the purchase link, and another if the price drops further. It also reads your Telegram groups as your own account. A post with a link is forwarded when it contains one of your words, or when [jev](https://github.com/feder-cr/jev) scores it at or above the threshold. jev is a small yes/no model that runs locally in the app's `jev` service (0.9B parameters, about 1 GB of RAM, x86-64 only).
+
+Words, discount and threshold are set by messaging the bot, and the first chat that writes to it owns it:
+
+| Command | Effect |
+| --- | --- |
+| `/add Bohrhammer, Makita` | Watch these words in retoura names and group posts. |
+| `/del Makita` | Stop watching a word. |
+| `/discount 60` | Minimum retoura discount in percent (default 60). |
+| `/threshold 0.2` | jev score (0–1) a group post without a watched word needs (default 0.2). |
+| `/check` | Check retoura now. |
+| `/list` | Show the settings. |
+
+With no words, every retoura item at or above the discount counts. On German posts jev scores tools low but still above unrelated products: in a test, tools scored 0.24–0.85 and non-tools at most 0.17, so the default threshold is 0.2.
+
+Setup:
+
+1. Telegram → @BotFather → `/newbot`, and put the token in `BOT_TOKEN`. Send `/start` to the new bot.
+2. my.telegram.org → **API development tools**, create an app, and put the api_id and api_hash in `TG_API_ID` and `TG_API_HASH`.
+3. Open the app page, enter your phone number and the code Telegram sends you, plus your two-step password if you use one. The session is stored under `${APP_DATA_DIR}/data`.
+
+On first start the app installs `telethon` into its data directory and downloads jev's binary and model (about 700 MB, checked against the release's SHA-256 sums). Delete `data/py` or `data/jev` there to get them again.
 
 ### Caddy
 
@@ -181,6 +220,8 @@ Each package lives in a directory whose name matches its `id`. Validate the mani
 docker compose -f sparkles-aiostreams/docker-compose.yml config
 docker compose -f sparkles-caddy/docker-compose.yml config
 docker compose -f sparkles-aiometadata/docker-compose.yml config
+docker compose -f sparkles-paperless-sweeper/docker-compose.yml config
+docker compose -f sparkles-deal-alerts/docker-compose.yml config
 ```
 
 umbrelOS removes the `app_proxy` service from the Compose file at runtime, so a bare `docker compose config` needs an overlay that provides it:
