@@ -48,7 +48,7 @@ environment:
     note: CPU threads for the local jev model. Each post takes well under a second.
 category: utilities
 name: Deal Alerts
-version: "1.0.4"
+version: "1.0.5"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/telegram.png
 tagline: Telegram alerts for retoura tool deals and construction finds in tester groups
 description: >-
@@ -79,4 +79,4 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  Group posts arrive as real forwards with a note on why they matched, including jev's category. Retoura alerts show the product photo. Night messages arrive silently (/quiet), and the bot lists its commands in the / menu.
+  /check takes an optional discount for a one-time scan, such as /check 30. Also: group posts arrive as real forwards with a note on why they matched, retoura alerts show the product photo, night messages arrive silently (/quiet), and the bot lists its commands in the / menu.

@@ -103,7 +103,7 @@ Words, discount and threshold are set by messaging the bot, and the first chat t
 | `/discount 60` | Minimum retoura discount in percent (default 60). |
 | `/threshold 0.2` | jev score (0–1) a group post without a watched word needs (default 0.2). |
 | `/quiet 22 7` | Messages between 22:00 and 7:00 (Berlin time) arrive without sound; `/quiet off` turns this off. |
-| `/check` | Check retoura now. |
+| `/check` | Check retoura now. `/check 30` checks once from 30% off without changing the saved discount. |
 | `/list` | Show the settings. |
 
 The bot shows these commands in Telegram's `/` menu. With no words, every retoura item at or above the discount counts.

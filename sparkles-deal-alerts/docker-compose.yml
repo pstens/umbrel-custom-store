@@ -183,10 +183,12 @@ services:
             with urllib.request.urlopen(req, timeout=60) as r:
                 return r.read().decode("utf-8", "replace")
 
-        def check_retoura():
+        def check_retoura(min_disc=None):
+            """min_disc overrides the saved minimum discount for this one check (/check 30)."""
             if not (BOT and STATE.get("chat_id")):
                 return log("retoura: waiting for BOT_TOKEN and /start")
-            hits, watch, min_disc = 0, list(STATE["watch"]), STATE["min_discount"]
+            hits, watch = 0, list(STATE["watch"])
+            min_disc = STATE["min_discount"] if min_disc is None else min_disc
             # Sortierung=99 lists the highest discount first, so stop at the first item below the threshold.
             for n in range(1, 50):
                 items = list(parse(fetch(n)))
@@ -229,7 +231,7 @@ services:
                 "/discount 60 – minimum retoura discount in percent\n"
                 "/threshold 0.2 – jev score (0–1) for group posts without a watched word\n"
                 "/quiet 22 7 – no sound from 22:00 to 7:00; /quiet off\n"
-                "/check – check retoura now\n"
+                "/check – check retoura now; /check 30 checks once from 30% off\n"
                 "/list – show the settings")
 
         def settings():
@@ -256,9 +258,10 @@ services:
                     if any(h > 23 for h in hours):
                         return HELP
                     STATE["quiet"] = hours
-                elif cmd == "/check":
-                    threading.Thread(target=lambda: notify(check_retoura()), daemon=True).start()
-                    return "Checking retoura…"
+                elif cmd == "/check" and (not arg.strip() or arg.strip().isdigit() and int(arg) <= 100):
+                    once = int(arg) if arg.strip() else None
+                    threading.Thread(target=lambda: notify(check_retoura(once)), daemon=True).start()
+                    return "Checking retoura%s…" % (" once from %d%% off" % once if once is not None else "")
                 elif cmd == "/list":
                     return settings()
                 else:
@@ -270,7 +273,7 @@ services:
                     ("discount", "Minimum retoura discount, e.g. /discount 40"),
                     ("threshold", "jev score for group posts, e.g. /threshold 0.2"),
                     ("quiet", "Silent hours, e.g. /quiet 22 7 or /quiet off"),
-                    ("check", "Check retoura now"), ("list", "Show the settings")]
+                    ("check", "Check retoura now, e.g. /check 30 for once from 30% off"), ("list", "Show the settings")]
 
         def bot_loop():
             offset = None
