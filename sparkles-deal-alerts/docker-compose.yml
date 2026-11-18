@@ -45,7 +45,9 @@ services:
                     tarfile.open(path).extractall(D, filter="data")
                 os.remove(path)
             open(D + "/jevos-v5.ready", "w").close()
-        os.execv(D + "/jev/jev", [D + "/jev/jev", "serve", "--host", "0.0.0.0", "--port", "8017",
+        # --warmup 0: by default jev precompiles 384 prompt lengths in the background, which kept its threads
+        # busy (2 full cores) while idle. Without it a new prompt length compiles on first use instead.
+        os.execv(D + "/jev/jev", [D + "/jev/jev", "serve", "--host", "0.0.0.0", "--port", "8017", "--warmup", "0",
                                   "--model-dir", D + "/model", "--threads", os.environ.get("JEV_THREADS") or "2"])
 
   alerts:
