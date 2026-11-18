@@ -363,16 +363,55 @@ services:
             # Only posts with a link can be bought from.
             if not links or not msg.message:
                 return
-            # A watched word is enough; jev judges the rest.
+            # Deal channels repost the same deal; the repost costs no jev call and sends no second alert.
+            if seen_before(links, msg.message):
+                STATS["duplicates"] += 1
+                return
+            # A watched word is enough and goes out at once; jev judges the rest, one post at a time.
             why = next((w for w in STATE["watch"] if w in msg.message.lower()), None)
-            if not why:
+            if why:
+                return await deliver(chat, title, msg, links, why)
+            JEV_QUEUE.put_nowait((chat, title, msg, links))
+
+        def link_key(url):
+            """Amazon links by product number, so different link variants of one product match; others as written."""
+            u = url.lower().split("?")[0].rstrip("/")
+            asin = re.search(r"/(?:dp|gp/product|gp/aw/d)/([a-z0-9]{10})", u)
+            return "asin:" + asin[1] if asin else u
+
+        SEEN = {}  # ponytail: in memory, so a restart forgets the last 24 h of posts; persist it if reposts after restarts annoy
+        STATS = {"duplicates": 0, "jev": 0}
+
+        def seen_before(links, text):
+            now = time.time()
+            for k in [k for k, t in SEEN.items() if now - t > 86400]:
+                del SEEN[k]
+            keys = {link_key(l) for l in links} | {"text:" + re.sub(r"https?://\S+|\W+", "", text.lower())[:200]}
+            dup = any(k in SEEN for k in keys)
+            SEEN.update(dict.fromkeys(keys, now))
+            return dup
+
+        JEV_QUEUE = asyncio.Queue()
+
+        async def jev_worker():
+            # One jev call at a time: a burst of posts waits here instead of loading the CPU in parallel.
+            last_report = time.time()
+            while True:
+                chat, title, msg, links = await JEV_QUEUE.get()
                 try:
                     p, kind = await asyncio.to_thread(classify, msg.message)
+                    STATS["jev"] += 1
+                    if p >= STATE["threshold"]:
+                        await deliver(chat, title, msg, links, "jev %.2f · %s" % (p, kind))
                 except Exception as e:
-                    return log("jev error: %r" % e)
-                if p < STATE["threshold"]:
-                    return
-                why = "jev %.2f · %s" % (p, kind)
+                    log("jev error: %r" % e)
+                if time.time() - last_report > 3600:
+                    log("tg: last hour %d post(s) judged by jev, %d repost(s) skipped, %d waiting" % (
+                        STATS["jev"], STATS["duplicates"], JEV_QUEUE.qsize()))
+                    STATS.update(jev=0, duplicates=0)
+                    last_report = time.time()
+
+        async def deliver(chat, title, msg, links, why):
             src = "https://t.me/%s/%d" % (chat.username, msg.id) if getattr(chat, "username", None) else "https://t.me/c/%d/%d" % (chat.id, msg.id)
             log("tg: %s — %s — %s" % (title, why, msg.message[:80].replace("\n", " ")))
             meta = "🔧 <b>%s</b> (%s)\n<a href=\"%s\">Beitrag</a>" % (html.escape(title), html.escape(why), src)
@@ -465,6 +504,7 @@ services:
                 threading.Thread(target=bot_loop, daemon=True).start()
             if TG:
                 TG.add_event_handler(on_message, events.NewMessage(incoming=True))
+                asyncio.create_task(jev_worker())
                 await tg_start()
             await retoura_loop()
 

@@ -48,7 +48,7 @@ environment:
     note: CPU threads for the local jev model. Each post takes well under a second.
 category: utilities
 name: Deal Alerts
-version: "1.0.7"
+version: "1.0.8"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/telegram.png
 tagline: Telegram alerts for retoura tool deals and construction finds in tester groups
 description: >-
@@ -79,4 +79,4 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  jev no longer precompiles in the background, which kept two CPU cores busy while idle. Also in 1.0.6: a better jev question for German posts (threshold reset to 0.8 once), /check 30 for a one-time scan, real forwards of group posts, product photos, silent nights (/quiet) and the / command menu.
+  Reposts of a deal across your groups (same link, Amazon product number or text within 24 hours) are skipped without a jev call or second alert. Posts for jev are queued and judged one at a time. 1.0.7 stopped jev from using two CPU cores while idle.
