@@ -1,0 +1,113 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sparkles-paperless-sweeper_sweeper_1
+      APP_PORT: 8080
+
+  sweeper:
+    image: docker.io/library/python:3.13-alpine@sha256:9ef1a599f863231c3d91e941389bfdc4a2d6070557243d54df1a4e57015b960e
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      PAPERLESS_URL: http://paperless_webserver_1:8000
+      PAPERLESS_TOKEN: ${PAPERLESS_TOKEN:-}
+      HOUSEHOLD_GROUP: ${HOUSEHOLD_GROUP:-Haushalt}
+      SWEEP_HOUR_UTC: ${SWEEP_HOUR_UTC:-2}
+    # The script lives here rather than in a file because umbrelOS does not
+    # copy plain files into the app data directory on app updates.
+    command:
+      - python
+      - -u
+      - -c
+      - |
+        import datetime, html, http.server, json, os, threading, time, urllib.error, urllib.request
+
+        BASE = os.environ["PAPERLESS_URL"].rstrip("/") + "/api/"
+        TOKEN = os.environ.get("PAPERLESS_TOKEN", "")
+        GROUP = os.environ.get("HOUSEHOLD_GROUP") or "Haushalt"
+        HOUR = int(os.environ.get("SWEEP_HOUR_UTC") or 2)
+        TYPES = ["correspondents", "tags", "document_types", "storage_paths"]
+        LOG = []
+        LOCK = threading.Lock()
+
+        def api(method, path, body=None):
+            req = urllib.request.Request(
+                BASE + path,
+                json.dumps(body).encode() if body is not None else None,
+                {"Authorization": "Token " + TOKEN, "Content-Type": "application/json"},
+                method=method,
+            )
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.load(r)
+
+        def err(e):
+            return "%s %s" % (e, e.read().decode()[:300]) if isinstance(e, urllib.error.HTTPError) else repr(e)
+
+        def log(msg):
+            line = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M UTC  ") + msg
+            print(line)
+            LOG.append(line)
+            del LOG[:-200]
+
+        def sweep():
+            if not TOKEN:
+                return log("PAPERLESS_TOKEN is not set")
+            try:
+                gid = next(g["id"] for g in api("GET", "groups/?page_size=1000")["results"] if g["name"] == GROUP)
+            except StopIteration:
+                return log("group %r not found in Paperless" % GROUP)
+            shared = {"view": {"users": [], "groups": [gid]}, "change": {"users": [], "groups": [gid]}}
+            done, failed = [], []
+            for t in TYPES:
+                for o in api("GET", t + "/?page_size=100000")["results"]:
+                    if o.get("owner") is None:
+                        continue
+                    # One object per call: a name clash with an existing unowned
+                    # object fails only that object, not the whole sweep.
+                    try:
+                        api("POST", "bulk_edit_objects/", {"objects": [o["id"]], "object_type": t,
+                            "operation": "set_permissions", "owner": None, "permissions": shared, "merge": False})
+                        done.append("%s: %s" % (t, o["name"]))
+                    except Exception as e:
+                        failed.append("%s: %s (%s)" % (t, o["name"], err(e)))
+            log("shared %d%s%s" % (len(done), ": " + ", ".join(done) if done else "",
+                                   "; FAILED " + "; ".join(failed) if failed else ""))
+
+        def run():
+            with LOCK:
+                try:
+                    sweep()
+                except Exception as e:
+                    log("error: " + err(e))
+
+        class Status(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == "/run":
+                    run()
+                    self.send_response(303)
+                    self.send_header("Location", "/")
+                    self.end_headers()
+                    return
+                lines = "\n".join(html.escape(l) for l in reversed(LOG)) or "No sweep yet."
+                body = ("<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"
+                        "<title>Paperless Sweeper</title><body style='font-family:system-ui;margin:16px'>"
+                        "<h1>Paperless Sweeper</h1><p>Nightly at %02d:30 UTC. <a href=/run>Run now</a></p>"
+                        "<pre style='white-space:pre-wrap'>%s</pre>" % (HOUR, lines)).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *args):
+                pass
+
+        threading.Thread(target=http.server.ThreadingHTTPServer(("", 8080), Status).serve_forever, daemon=True).start()
+        while True:
+            run()
+            now = datetime.datetime.now(datetime.UTC)
+            nxt = now.replace(hour=HOUR, minute=30, second=0, microsecond=0)
+            if nxt <= now:
+                nxt += datetime.timedelta(days=1)
+            time.sleep((nxt - now).total_seconds())

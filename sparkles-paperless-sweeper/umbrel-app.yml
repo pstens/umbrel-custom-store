@@ -1,0 +1,50 @@
+manifestVersion: "2.0"
+id: sparkles-paperless-sweeper
+environment:
+  - name: PAPERLESS_TOKEN
+    services:
+      - sweeper
+    default: ""
+    note: API token of a Paperless-ngx superuser (for example admin). Create one in Paperless under Profile → API Auth Token. The sweeper needs it to see and change objects owned by every user.
+  - name: HOUSEHOLD_GROUP
+    services:
+      - sweeper
+    default: "Haushalt"
+    note: Paperless group that gets view and change permissions on every swept object.
+  - name: SWEEP_HOUR_UTC
+    services:
+      - sweeper
+    default: "2"
+    note: Hour (UTC) of the nightly sweep. It runs at minute 30. 2 means 03:30 in German winter time and 04:30 in summer time.
+category: files
+name: Paperless Sweeper
+version: "1.0.0"
+icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/paperless-ngx.png
+tagline: Share new Paperless correspondents and tags with the household every night
+description: >-
+  Paperless-ngx gives every correspondent, tag, document type and storage
+  path the AI or a user creates to that user alone, so other household
+  members can't see it and end up creating duplicates.
+
+  Every night, and once at start, this app removes the owner from those
+  objects and gives the household group view and change permissions. Unowned
+  objects are visible to every Paperless user, and the AI reuses them for
+  everyone.
+
+  Set PAPERLESS_TOKEN to a superuser's API token. The app page shows the
+  latest sweeps and a button to run one now.
+developer: Sparkles
+website: https://github.com/pstens/umbrel-custom-store
+dependencies:
+  - paperless
+repo: https://github.com/pstens/umbrel-custom-store
+support: https://github.com/pstens/umbrel-custom-store/issues
+port: 4002
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Sparkles
+submission: https://github.com/pstens/umbrel-custom-store
+releaseNotes: >-
+  First release.
