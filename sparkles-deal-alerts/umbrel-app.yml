@@ -35,7 +35,7 @@ environment:
     services:
       - alerts
     default: ""
-    note: Comma-separated parts of group names to watch, such as "Produkttester, Tester". Empty means every group and channel you are in.
+    note: Comma-separated groups to watch. Each can be a group link (t.me or web.telegram.org), an @username, a chat ID, or part of the group name. Empty means every group and channel you are in.
   - name: TG_TOPIC
     services:
       - alerts
@@ -48,7 +48,7 @@ environment:
     note: CPU threads for the local jev model. Each post takes well under a second.
 category: utilities
 name: Deal Alerts
-version: "1.0.2"
+version: "1.0.3"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/telegram.png
 tagline: Telegram alerts for retoura tool deals and construction finds in tester groups
 description: >-
@@ -79,4 +79,4 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  The bot runs one command per line, so several commands can go in one message.
+  The bot runs one command per line, so several commands can go in one message. TG_GROUPS also accepts group links, @usernames and chat IDs.

@@ -88,7 +88,8 @@ services:
         BOT = E("BOT_TOKEN", "")
         SHOP = E("RETOURA_URL", "").rstrip("/")
         EVERY = int(E("RETOURA_INTERVAL_MIN") or 30) * 60
-        GROUPS = [g.strip().lower() for g in E("TG_GROUPS", "").split(",") if g.strip()]
+        # Each entry: part of a group name, @username, chat ID, or a t.me / web.telegram.org link to the group.
+        GROUPS = [re.split(r"[/#]", g.strip().lower())[-1].lstrip("@") for g in E("TG_GROUPS", "").split(",") if g.strip()]
         TOPIC = E("TG_TOPIC") or ("power tools, hand tools, machines, measuring devices, ladders, work clothing, "
                                   "safety gear, work lights, cables or batteries")
         # Keywords, discount and threshold are set by messaging the bot and kept here.
@@ -264,7 +265,8 @@ services:
                 return
             chat = await ev.get_chat()
             title = getattr(chat, "title", "") or ""
-            if GROUPS and not any(g in title.lower() for g in GROUPS):
+            keys = {(getattr(chat, "username", "") or "").lower(), str(chat.id), "-%d" % chat.id, "-100%d" % chat.id}
+            if GROUPS and not any(g in keys or g in title.lower() for g in GROUPS):
                 return
             msg = ev.message
             links = re.findall(r"https?://\S+", msg.message or "")
