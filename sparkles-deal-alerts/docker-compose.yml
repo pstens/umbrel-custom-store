@@ -243,6 +243,7 @@ services:
                 "/threshold 0.8 – jev score (0–1) for group posts without a watched word\n"
                 "/quiet 22 7 – no sound from 22:00 to 7:00; /quiet off\n"
                 "/check – check retoura now; /check 30 checks once from 30% off\n"
+                "/reset – forget which retoura deals were sent, so /check sends them again\n"
                 "/list – show the settings")
 
         def settings():
@@ -269,6 +270,11 @@ services:
                     if any(h > 23 for h in hours):
                         return HELP
                     STATE["quiet"] = hours
+                elif cmd == "/reset":
+                    n = len(STATE["sent"])
+                    STATE["sent"] = {}
+                    save()
+                    return "Forgot %d sent retoura deal(s). /check sends every match again." % n
                 elif cmd == "/check" and (not arg.strip() or arg.strip().isdigit() and int(arg) <= 100):
                     once = int(arg) if arg.strip() else None
                     threading.Thread(target=lambda: notify(check_retoura(once)), daemon=True).start()
@@ -284,7 +290,8 @@ services:
                     ("discount", "Minimum retoura discount, e.g. /discount 40"),
                     ("threshold", "jev score for group posts, e.g. /threshold 0.8"),
                     ("quiet", "Silent hours, e.g. /quiet 22 7 or /quiet off"),
-                    ("check", "Check retoura now, e.g. /check 30 for once from 30% off"), ("list", "Show the settings")]
+                    ("check", "Check retoura now, e.g. /check 30 for once from 30% off"),
+                    ("reset", "Forget sent retoura deals so /check sends them again"), ("list", "Show the settings")]
 
         def bot_loop():
             offset = None

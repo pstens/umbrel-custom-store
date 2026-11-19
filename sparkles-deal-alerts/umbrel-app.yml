@@ -48,7 +48,7 @@ environment:
     note: CPU threads for the local jev model. Each post takes well under a second.
 category: utilities
 name: Deal Alerts
-version: "1.0.9"
+version: "1.0.10"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/telegram.png
 tagline: Telegram alerts for retoura tool deals and construction finds in tester groups
 description: >-
@@ -79,4 +79,4 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  Group matches arrive as one bot message with photo, reason, text and links, instead of a forward plus a note. 1.0.8 skips reposts across your groups and judges posts for jev one at a time.
+  /reset forgets which retoura deals were sent, so /check sends every match again. 1.0.9 sends group matches as one bot message.
