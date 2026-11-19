@@ -332,21 +332,6 @@ services:
                 a = json.load(r)["answers"]
             return a["useful"]["noul"], a["category"]["choice"]
 
-        BOT_USER = {}
-
-        async def forward(msg):
-            """Forward the original post from your account into your chat with the bot, if that chat is yours."""
-            try:
-                if not BOT_USER:
-                    BOT_USER.update(bot("getMe"), me=(await TG.get_me()).id)
-                if BOT_USER["me"] != STATE.get("chat_id"):
-                    return False
-                await TG.forward_messages(BOT_USER["username"], msg)
-                return True
-            except Exception as e:
-                log("forward failed, copying instead: %r" % e)
-                return False
-
         async def on_message(ev):
             if ev.is_private:
                 return
@@ -415,10 +400,7 @@ services:
             src = "https://t.me/%s/%d" % (chat.username, msg.id) if getattr(chat, "username", None) else "https://t.me/c/%d/%d" % (chat.id, msg.id)
             log("tg: %s — %s — %s" % (title, why, msg.message[:80].replace("\n", " ")))
             meta = "🔧 <b>%s</b> (%s)\n<a href=\"%s\">Beitrag</a>" % (html.escape(title), html.escape(why), src)
-            if await forward(msg):
-                # Own forwards make no sound, so the bot's note right below it is what notifies.
-                return await asyncio.to_thread(notify, "↑ " + meta)
-            # Forwarding failed (e.g. the channel protects its content): copy text and photo instead.
+            # One message: the post's photo, why it matched, its text and links.
             try:
                 photo = await msg.download_media(file=bytes) if msg.photo else None
             except Exception as e:
