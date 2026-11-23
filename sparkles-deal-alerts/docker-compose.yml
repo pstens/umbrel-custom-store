@@ -354,9 +354,8 @@ services:
             links += [e.url for e in (msg.entities or []) if getattr(e, "url", None)]
             links += [b.url for row in (msg.buttons or []) for b in row if getattr(b, "url", None)]
             links = list(dict.fromkeys(links))
-            # Only posts with a link can be bought from.
-            if not links or not msg.message:
-                STATS["nolink"] += 1
+            # Tester groups often post "Interesse? PN" without a shop link, so posts without one count too; the alert links the post.
+            if not msg.message:
                 return
             # Deal channels repost the same deal; the repost costs no jev call and sends no second alert.
             if seen_before(links, msg.message):
@@ -375,7 +374,7 @@ services:
             return "asin:" + asin[1] if asin else u
 
         SEEN = {}  # ponytail: in memory, so a restart forgets the last 24 h of posts; persist it if reposts after restarts annoy
-        STATS = {"duplicates": 0, "jev": 0, "nolink": 0}
+        STATS = {"duplicates": 0, "jev": 0}
 
         def seen_before(links, text):
             now = time.time()
@@ -401,9 +400,9 @@ services:
                 except Exception as e:
                     log("jev error: %r" % e)
                 if time.time() - last_report > 3600:
-                    log("tg: last hour %d post(s) judged by jev, %d repost(s) and %d without link skipped, %d waiting" % (
-                        STATS["jev"], STATS["duplicates"], STATS["nolink"], JEV_QUEUE.qsize()))
-                    STATS.update(jev=0, duplicates=0, nolink=0)
+                    log("tg: last hour %d post(s) judged by jev, %d repost(s) skipped, %d waiting" % (
+                        STATS["jev"], STATS["duplicates"], JEV_QUEUE.qsize()))
+                    STATS.update(jev=0, duplicates=0)
                     last_report = time.time()
 
         async def deliver(chat, title, msg, links, why):
