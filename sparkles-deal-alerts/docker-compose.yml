@@ -60,7 +60,7 @@ services:
       HOME: /data
       BOT_TOKEN: ${BOT_TOKEN:-}
       CHAT_ID: ${CHAT_ID:-}
-      RETOURA_URL: ${RETOURA_URL:-https://shop.retoura.de/Maschinen-Geraete}
+      RETOURA_URL: ${RETOURA_URL:-https://shop.retoura.de/Maschinen-Geraete,https://shop.retoura.de/Akkus-Ladegeraete,https://shop.retoura.de/Handwerkzeuge,https://shop.retoura.de/Grossmaschinen,https://shop.retoura.de/Werkstatteinrichtung,https://shop.retoura.de/Arbeitskleidung-Schutz,https://shop.retoura.de/Malerzubehoer,https://shop.retoura.de/Sicherheitstechnik}
       RETOURA_INTERVAL_MIN: ${RETOURA_INTERVAL_MIN:-30}
       TG_API_ID: ${TG_API_ID:-}
       TG_API_HASH: ${TG_API_HASH:-}
@@ -89,7 +89,7 @@ services:
 
         E = os.environ.get
         BOT = E("BOT_TOKEN", "")
-        SHOP = E("RETOURA_URL", "").rstrip("/")
+        SHOPS = [u.strip().split("?")[0].rstrip("/") for u in E("RETOURA_URL", "").split(",") if u.strip()]
         EVERY = int(E("RETOURA_INTERVAL_MIN") or 30) * 60
         # Each entry: part of a group name, @username, chat ID, or a t.me / web.telegram.org link to the group.
         GROUPS = [re.split(r"[/#]", g.strip().lower())[-1].lstrip("@") for g in E("TG_GROUPS", "").split(",") if g.strip()]
@@ -107,10 +107,10 @@ services:
         STATE.setdefault("sent", {})
         STATE.setdefault("watch", [])
         STATE.setdefault("min_discount", 60)
-        STATE.setdefault("threshold", 0.8)
-        if STATE.get("jev_question") != 2:
-            # The tradesman question scores higher than the first one, so an old threshold would let everything through.
-            STATE.update(jev_question=2, threshold=0.8)
+        STATE.setdefault("threshold", 0.92)
+        if STATE.get("jev_question") != 3:
+            # Version 2 moved to the tradesman question; 3 raises the threshold, because 0.8 passed coffee machines and pyjamas.
+            STATE.update(jev_question=3, threshold=0.92)
         STATE.setdefault("quiet", [22, 7])
         TZ = ZoneInfo(E("TZ") or "Europe/Berlin")
         if E("CHAT_ID"):
@@ -188,8 +188,8 @@ services:
                        "price": float(price[1]), "old": old[1].strip() if old else "",
                        "discount": int(disc[1]) if disc else 0}
 
-        def fetch(n):
-            url = SHOP + ("" if n == 1 else "_s%d" % n) + "?Sortierung=99"
+        def fetch(shop, n):
+            url = shop + ("" if n == 1 else "_s%d" % n) + "?Sortierung=99"
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=60) as r:
                 return r.read().decode("utf-8", "replace")
@@ -198,16 +198,20 @@ services:
             """min_disc overrides the saved minimum discount for this one check (/check 30)."""
             if not (BOT and STATE.get("chat_id")):
                 return log("retoura: waiting for BOT_TOKEN and /start")
-            hits, watch = 0, list(STATE["watch"])
             min_disc = STATE["min_discount"] if min_disc is None else min_disc
+            hits = sum(check_shop(shop, min_disc) for shop in SHOPS)
+            msg = "retoura: %d new deal(s) in %d categor%s" % (hits, len(SHOPS), "y" if len(SHOPS) == 1 else "ies")
+            log(msg)
+            return msg
+
+        def check_shop(shop, min_disc):
+            hits, watch = 0, list(STATE["watch"])
             # Sortierung=99 lists the highest discount first, so stop at the first item below the threshold.
             for n in range(1, 50):
-                items = list(parse(fetch(n)))
+                items = list(parse(fetch(shop, n)))
                 for it in items:
                     if it["discount"] < min_disc:
-                        msg = "retoura: %d new deal(s), scanned %d page(s)" % (hits, n)
-                        log(msg)
-                        return msg
+                        return hits
                     if watch and not any(w in it["name"].lower() for w in watch):
                         continue
                     seen = STATE["sent"].get(it["url"])
@@ -224,9 +228,7 @@ services:
                     hits += 1
                 if len(items) < 20:
                     break
-            msg = "retoura: %d new deal(s), reached the last page" % hits
-            log(msg)
-            return msg
+            return hits
 
         async def retoura_loop():
             while True:
@@ -240,7 +242,7 @@ services:
         HELP = ("/add Bohrhammer, Makita – watch words in retoura names and group posts\n"
                 "/del Makita – stop watching a word\n"
                 "/discount 60 – minimum retoura discount in percent\n"
-                "/threshold 0.8 – jev score (0–1) for group posts without a watched word\n"
+                "/threshold 0.92 – jev score (0–1) for group posts without a watched word\n"
                 "/quiet 22 7 – no sound from 22:00 to 7:00; /quiet off\n"
                 "/check – check retoura now; /check 30 checks once from 30% off\n"
                 "/reset – forget which retoura deals were sent, so /check sends them again\n"
@@ -288,7 +290,7 @@ services:
 
         COMMANDS = [("add", "Watch words, e.g. /add bohrhammer, säge"), ("del", "Stop watching words"),
                     ("discount", "Minimum retoura discount, e.g. /discount 40"),
-                    ("threshold", "jev score for group posts, e.g. /threshold 0.8"),
+                    ("threshold", "jev score for group posts, e.g. /threshold 0.92"),
                     ("quiet", "Silent hours, e.g. /quiet 22 7 or /quiet off"),
                     ("check", "Check retoura now, e.g. /check 30 for once from 30% off"),
                     ("reset", "Forget sent retoura deals so /check sends them again"), ("list", "Show the settings")]
@@ -354,6 +356,7 @@ services:
             links = list(dict.fromkeys(links))
             # Only posts with a link can be bought from.
             if not links or not msg.message:
+                STATS["nolink"] += 1
                 return
             # Deal channels repost the same deal; the repost costs no jev call and sends no second alert.
             if seen_before(links, msg.message):
@@ -372,7 +375,7 @@ services:
             return "asin:" + asin[1] if asin else u
 
         SEEN = {}  # ponytail: in memory, so a restart forgets the last 24 h of posts; persist it if reposts after restarts annoy
-        STATS = {"duplicates": 0, "jev": 0}
+        STATS = {"duplicates": 0, "jev": 0, "nolink": 0}
 
         def seen_before(links, text):
             now = time.time()
@@ -398,9 +401,9 @@ services:
                 except Exception as e:
                     log("jev error: %r" % e)
                 if time.time() - last_report > 3600:
-                    log("tg: last hour %d post(s) judged by jev, %d repost(s) skipped, %d waiting" % (
-                        STATS["jev"], STATS["duplicates"], JEV_QUEUE.qsize()))
-                    STATS.update(jev=0, duplicates=0)
+                    log("tg: last hour %d post(s) judged by jev, %d repost(s) and %d without link skipped, %d waiting" % (
+                        STATS["jev"], STATS["duplicates"], STATS["nolink"], JEV_QUEUE.qsize()))
+                    STATS.update(jev=0, duplicates=0, nolink=0)
                     last_report = time.time()
 
         async def deliver(chat, title, msg, links, why):
@@ -415,6 +418,24 @@ services:
             await asyncio.to_thread(notify, "%s\n\n%s\n\n%s" % (meta, html.escape(msg.message[:300]),
                 "\n".join(html.escape(l[:150]) for l in links[:3])), photo)
 
+        async def log_groups():
+            """Shows which of your groups TG_GROUPS matched, so a wrong ID or name shows up in the log."""
+            if not GROUPS:
+                return log("telegram: watching every group and channel")
+            found, unmatched = [], set(GROUPS)
+            async for d in TG.iter_dialogs():
+                if d.is_user:
+                    continue
+                c = d.entity
+                keys = {(getattr(c, "username", "") or "").lower(), str(c.id), "-%d" % c.id, "-100%d" % c.id}
+                hit = [g for g in GROUPS if g in keys or g in (d.name or "").lower()]
+                if hit:
+                    found.append("%s (%s)" % (d.name, d.id))
+                unmatched -= set(hit)
+            log("telegram: watching " + (", ".join(found) or "nothing"))
+            if unmatched:
+                log("telegram: no group of yours matches %s — check TG_GROUPS" % ", ".join(sorted(unmatched)))
+
         def run(coro):
             return asyncio.run_coroutine_threadsafe(coro, LOOP).result(120)
 
@@ -423,6 +444,7 @@ services:
             if await TG.is_user_authorized():
                 me = await TG.get_me()
                 log("telegram: listening as %s" % (me.username or me.first_name))
+                await log_groups()
             else:
                 log("telegram: not logged in, open the app page to log in")
 
