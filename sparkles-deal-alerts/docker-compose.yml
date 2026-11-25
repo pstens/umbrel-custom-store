@@ -47,8 +47,18 @@ services:
             open(D + "/jevos-v5.ready", "w").close()
         # --warmup 0: by default jev precompiles 384 prompt lengths in the background, which kept its threads
         # busy (2 full cores) while idle. Without it a new prompt length compiles on first use instead.
-        os.execv(D + "/jev/jev", [D + "/jev/jev", "serve", "--host", "0.0.0.0", "--port", "8017", "--warmup", "0",
-                                  "--model-dir", D + "/model", "--threads", os.environ.get("JEV_THREADS") or "2"])
+        import signal, subprocess, time
+        p = subprocess.Popen([D + "/jev/jev", "serve", "--host", "0.0.0.0", "--port", "8017", "--warmup", "0",
+                              "--model-dir", D + "/model", "--threads", os.environ.get("JEV_THREADS") or "2"])
+        signal.signal(signal.SIGTERM, lambda *_: p.terminate())
+        # Hourly memory line, so a leak shows up in the log as a rising number.
+        while p.poll() is None:
+            try:
+                p.wait(3600)
+            except subprocess.TimeoutExpired:
+                rss = next((l.split()[1] for l in open("/proc/%d/status" % p.pid) if l.startswith("VmRSS")), "?")
+                print("jev memory: %d MB" % (int(rss) // 1024) if rss != "?" else "jev memory: unknown", flush=True)
+        raise SystemExit(p.returncode)
 
   alerts:
     image: docker.io/library/python:3.13-alpine@sha256:9ef1a599f863231c3d91e941389bfdc4a2d6070557243d54df1a4e57015b960e
@@ -400,8 +410,9 @@ services:
                 except Exception as e:
                     log("jev error: %r" % e)
                 if time.time() - last_report > 3600:
-                    log("tg: last hour %d post(s) judged by jev, %d repost(s) skipped, %d waiting" % (
-                        STATS["jev"], STATS["duplicates"], JEV_QUEUE.qsize()))
+                    rss = next((int(l.split()[1]) // 1024 for l in open("/proc/self/status") if l.startswith("VmRSS")), 0)
+                    log("tg: last hour %d post(s) judged by jev, %d repost(s) skipped, %d waiting, %d MB memory" % (
+                        STATS["jev"], STATS["duplicates"], JEV_QUEUE.qsize(), rss))
                     STATS.update(jev=0, duplicates=0)
                     last_report = time.time()
 

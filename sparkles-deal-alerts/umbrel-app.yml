@@ -48,7 +48,7 @@ environment:
     note: CPU threads for the local jev model. Each post takes well under a second.
 category: utilities
 name: Deal Alerts
-version: "1.0.12"
+version: "1.0.13"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/telegram.png
 tagline: Telegram alerts for retoura tool deals and construction finds in tester groups
 description: >-
@@ -79,4 +79,4 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  Watches eight retoura construction categories instead of only Maschinen & Geräte, including Akkus & Ladegeräte. The log now shows which Telegram groups TG_GROUPS matched and posts without a link are judged too, since tester groups often ask for a DM instead of linking a shop. The jev threshold rises to 0.92 once, since 0.8 let household items through.
+  The log shows the memory of the bot and of jev every hour, so a leak would show up as a rising number. 1.0.12 watches eight retoura construction categories and judges group posts without a link too.

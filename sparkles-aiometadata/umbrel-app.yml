@@ -456,7 +456,7 @@ environment:
   - name: TMDB_POPULAR_WARMING_ENABLED
     services:
       - server
-    default: ""
+    default: "false"
     note: "Set to \"false\" to disable warming of popular TMDB content. (Default: true)"
   - name: CACHE_WARM_INTERVAL_HOURS
     services:
@@ -476,7 +476,7 @@ environment:
   - name: MAL_WARMUP_ENABLED
     services:
       - server
-    default: ""
+    default: "false"
     note: "Set to \"false\" to disable MAL-specific catalog warming. (Default: true)"
   - name: MAL_WARMUP_INTERVAL_HOURS
     services:
@@ -750,7 +750,7 @@ environment:
     note: "Advanced. See docs/ENVIRONMENT_VARIABLES.md in the AIOMetadata repository."
 category: media
 name: AIOMetadata
-version: "3.8.3-2"
+version: "3.8.3-3"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/aiometadata.png
 tagline: Catalogs and metadata for AIOStreams and Stremio
 description: >-
@@ -779,7 +779,5 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  The German template adds "Neu im Kino" and "Neu auf Streaming" and uses
-  TMDB's own trending list for "Im Trend". Every catalog now has one "Alle"
-  tile in UHF, while the "Beliebt" catalogs keep their genres. Re-apply the
-  template from the Setup page and refresh the catalogs in AIOStreams.
+  Stops warming anime (MAL) catalogs and TMDB's general popular list, which
+  the German template does not use. Your own catalogs are still warmed.
