@@ -70,7 +70,7 @@ services:
       HOME: /data
       BOT_TOKEN: ${BOT_TOKEN:-}
       CHAT_ID: ${CHAT_ID:-}
-      RETOURA_URL: ${RETOURA_URL:-https://shop.retoura.de/Maschinen-Geraete,https://shop.retoura.de/Akkus-Ladegeraete,https://shop.retoura.de/Handwerkzeuge,https://shop.retoura.de/Grossmaschinen,https://shop.retoura.de/Werkstatteinrichtung,https://shop.retoura.de/Arbeitskleidung-Schutz,https://shop.retoura.de/Malerzubehoer,https://shop.retoura.de/Sicherheitstechnik,https://shop.retoura.de/Staubsauger-Reinigung}
+      RETOURA_URL: ${RETOURA_URL:-https://shop.retoura.de/Maschinen-Geraete,https://shop.retoura.de/Akkus-Ladegeraete,https://shop.retoura.de/Handwerkzeuge,https://shop.retoura.de/Grossmaschinen,https://shop.retoura.de/Werkstatteinrichtung,https://shop.retoura.de/Arbeitskleidung-Schutz,https://shop.retoura.de/Malerzubehoer,https://shop.retoura.de/Sicherheitstechnik,https://shop.retoura.de/Staubsauger-Reinigung,https://shop.retoura.de/Zubehoer,https://shop.retoura.de/Bodenbelaege,https://shop.retoura.de/Sanitaerzubehoer,https://shop.retoura.de/Heiz-Kuehlgeraete,https://shop.retoura.de/Stromversorgung}
       RETOURA_INTERVAL_MIN: ${RETOURA_INTERVAL_MIN:-30}
       TG_API_ID: ${TG_API_ID:-}
       TG_API_HASH: ${TG_API_HASH:-}
