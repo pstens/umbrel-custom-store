@@ -19,8 +19,8 @@ environment:
   - name: RETOURA_URL
     services:
       - alerts
-    default: "https://shop.retoura.de/Maschinen-Geraete,https://shop.retoura.de/Akkus-Ladegeraete,https://shop.retoura.de/Handwerkzeuge,https://shop.retoura.de/Grossmaschinen,https://shop.retoura.de/Werkstatteinrichtung,https://shop.retoura.de/Arbeitskleidung-Schutz,https://shop.retoura.de/Malerzubehoer,https://shop.retoura.de/Sicherheitstechnik"
-    note: Comma-separated retoura categories to watch, without query string. Default covers Maschinen & Geräte, Akkus & Ladegeräte, Handwerkzeuge, Großmaschinen, Werkstatteinrichtung, Arbeitskleidung & Schutz, Malerzubehör and Sicherheitstechnik.
+    default: "https://shop.retoura.de/Maschinen-Geraete,https://shop.retoura.de/Akkus-Ladegeraete,https://shop.retoura.de/Handwerkzeuge,https://shop.retoura.de/Grossmaschinen,https://shop.retoura.de/Werkstatteinrichtung,https://shop.retoura.de/Arbeitskleidung-Schutz,https://shop.retoura.de/Malerzubehoer,https://shop.retoura.de/Sicherheitstechnik,https://shop.retoura.de/Staubsauger-Reinigung"
+    note: Comma-separated retoura categories to watch, without query string. Default covers Maschinen & Geräte, Akkus & Ladegeräte, Handwerkzeuge, Großmaschinen, Werkstatteinrichtung, Arbeitskleidung & Schutz, Malerzubehör, Sicherheitstechnik and Staubsauger & Reinigung.
   - name: TG_API_ID
     services:
       - alerts
@@ -48,7 +48,7 @@ environment:
     note: CPU threads for the local jev model. Each post takes well under a second.
 category: utilities
 name: Deal Alerts
-version: "1.0.13"
+version: "1.0.14"
 icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/telegram.png
 tagline: Telegram alerts for retoura tool deals and construction finds in tester groups
 description: >-
@@ -79,4 +79,4 @@ defaultPassword: ""
 submitter: Sparkles
 submission: https://github.com/pstens/umbrel-custom-store
 releaseNotes: >-
-  The log shows the memory of the bot and of jev every hour, so a leak would show up as a rising number. 1.0.12 watches eight retoura construction categories and judges group posts without a link too.
+  Watches retoura Staubsauger & Reinigung too, and the log lists the Telegram groups TG_GROUPS does not watch. 1.0.13: the log shows the memory of the bot and of jev every hour, so a leak would show up as a rising number. 1.0.12 watches eight retoura construction categories and judges group posts without a link too.

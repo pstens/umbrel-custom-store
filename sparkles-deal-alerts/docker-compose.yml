@@ -70,7 +70,7 @@ services:
       HOME: /data
       BOT_TOKEN: ${BOT_TOKEN:-}
       CHAT_ID: ${CHAT_ID:-}
-      RETOURA_URL: ${RETOURA_URL:-https://shop.retoura.de/Maschinen-Geraete,https://shop.retoura.de/Akkus-Ladegeraete,https://shop.retoura.de/Handwerkzeuge,https://shop.retoura.de/Grossmaschinen,https://shop.retoura.de/Werkstatteinrichtung,https://shop.retoura.de/Arbeitskleidung-Schutz,https://shop.retoura.de/Malerzubehoer,https://shop.retoura.de/Sicherheitstechnik}
+      RETOURA_URL: ${RETOURA_URL:-https://shop.retoura.de/Maschinen-Geraete,https://shop.retoura.de/Akkus-Ladegeraete,https://shop.retoura.de/Handwerkzeuge,https://shop.retoura.de/Grossmaschinen,https://shop.retoura.de/Werkstatteinrichtung,https://shop.retoura.de/Arbeitskleidung-Schutz,https://shop.retoura.de/Malerzubehoer,https://shop.retoura.de/Sicherheitstechnik,https://shop.retoura.de/Staubsauger-Reinigung}
       RETOURA_INTERVAL_MIN: ${RETOURA_INTERVAL_MIN:-30}
       TG_API_ID: ${TG_API_ID:-}
       TG_API_HASH: ${TG_API_HASH:-}
@@ -432,17 +432,18 @@ services:
             """Shows which of your groups TG_GROUPS matched, so a wrong ID or name shows up in the log."""
             if not GROUPS:
                 return log("telegram: watching every group and channel")
-            found, unmatched = [], set(GROUPS)
+            found, others, unmatched = [], [], set(GROUPS)
             async for d in TG.iter_dialogs():
                 if d.is_user:
                     continue
                 c = d.entity
                 keys = {(getattr(c, "username", "") or "").lower(), str(c.id), "-%d" % c.id, "-100%d" % c.id}
                 hit = [g for g in GROUPS if g in keys or g in (d.name or "").lower()]
-                if hit:
-                    found.append("%s (%s)" % (d.name, d.id))
+                (found if hit else others).append("%s (%s)" % (d.name, d.id))
                 unmatched -= set(hit)
             log("telegram: watching " + (", ".join(found) or "nothing"))
+            if others:
+                log("telegram: not watching " + ", ".join(others))
             if unmatched:
                 log("telegram: no group of yours matches %s — check TG_GROUPS" % ", ".join(sorted(unmatched)))
 
